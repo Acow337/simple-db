@@ -356,7 +356,7 @@ public class BTreeFile implements DbFile {
      * @param page       - the parent page
      * @throws DbException
      * @throws TransactionAbortedException
-     * @see #updateParentPointer(TransactionId, HashMap, BTreePageId, BTreePageId)
+     * @see # updateParentPointer(TransactionId, HashMap, BTreePageId, BTreePageId)
      */
     private void updateParentPointers(TransactionId tid, Map<PageId, Page> dirtypages, BTreeInternalPage page)
             throws DbException, TransactionAbortedException {
