@@ -3,14 +3,17 @@ package simpledb.storage;
 import simpledb.common.Type;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * TupleDesc describes the schema of a tuple.
  */
 public class TupleDesc implements Serializable {
+
+    /**
+     * items contain the content of the fields
+     */
+    private List<TDItem> items;
 
     /**
      * A help class to facilitate organizing the information of each field
@@ -41,11 +44,10 @@ public class TupleDesc implements Serializable {
 
     /**
      * @return An iterator which iterates over all the field TDItems
-     *         that are included in this TupleDesc
+     * that are included in this TupleDesc
      */
     public Iterator<TDItem> iterator() {
-        // TODO: some code goes here
-        return null;
+        return items.iterator();
     }
 
     private static final long serialVersionUID = 1L;
@@ -60,7 +62,12 @@ public class TupleDesc implements Serializable {
      *                be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
-        // TODO: some code goes here
+        init();
+        int length = typeAr.length;
+        for (int i = 0; i < length; i++) {
+            TDItem item = new TDItem(typeAr[i], fieldAr[i]);
+            items.add(item);
+        }
     }
 
     /**
@@ -71,15 +78,23 @@ public class TupleDesc implements Serializable {
      *               TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        // TODO: some code goes here
+        init();
+        int length = typeAr.length;
+        for (int i = 0; i < length; i++) {
+            TDItem item = new TDItem(typeAr[i], "unnamed");
+            items.add(item);
+        }
+    }
+
+    public TupleDesc() {
+        init();
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        // TODO: some code goes here
-        return 0;
+        return items.size();
     }
 
     /**
@@ -90,8 +105,10 @@ public class TupleDesc implements Serializable {
      * @throws NoSuchElementException if i is not a valid field reference.
      */
     public String getFieldName(int i) throws NoSuchElementException {
-        // TODO: some code goes here
-        return null;
+        if (i < 0 || i >= items.size()) {
+            throw new NoSuchElementException();
+        }
+        return items.get(i).fieldName;
     }
 
     /**
@@ -103,8 +120,10 @@ public class TupleDesc implements Serializable {
      * @throws NoSuchElementException if i is not a valid field reference.
      */
     public Type getFieldType(int i) throws NoSuchElementException {
-        // TODO: some code goes here
-        return null;
+        if (i < 0 || i >= items.size()) {
+            throw new NoSuchElementException();
+        }
+        return items.get(i).fieldType;
     }
 
     /**
@@ -115,17 +134,22 @@ public class TupleDesc implements Serializable {
      * @throws NoSuchElementException if no field with a matching name is found.
      */
     public int indexForFieldName(String name) throws NoSuchElementException {
-        // TODO: some code goes here
-        return 0;
+        int i = 0;
+        for (TDItem item : items) {
+            if (item.fieldName.equals(name)) {
+                return i;
+            }
+            i++;
+        }
+        throw new NoSuchElementException();
     }
 
     /**
      * @return The size (in bytes) of tuples corresponding to this TupleDesc.
-     *         Note that tuples from a given TupleDesc are of a fixed size.
+     * Note that tuples from a given TupleDesc are of a fixed size.
      */
     public int getSize() {
-        // TODO: some code goes here
-        return 0;
+        return items.size();
     }
 
     /**
@@ -137,8 +161,25 @@ public class TupleDesc implements Serializable {
      * @return the new TupleDesc
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
-        // TODO: some code goes here
-        return null;
+        Iterator<TDItem> iterator1 = td1.iterator();
+        Iterator<TDItem> iterator2 = td1.iterator();
+        int size = td1.getSize() + td2.getSize();
+        int index = 0;
+        Type[] types = new Type[size];
+        String[] strings = new String[size];
+        while (iterator1.hasNext()) {
+            TDItem item = iterator1.next();
+            types[index] = item.fieldType;
+            strings[index] = item.fieldName;
+            index++;
+        }
+        while (iterator2.hasNext()) {
+            TDItem item = iterator2.next();
+            types[index] = item.fieldType;
+            strings[index] = item.fieldName;
+            index++;
+        }
+        return new TupleDesc(types, strings);
     }
 
     /**
@@ -152,14 +193,14 @@ public class TupleDesc implements Serializable {
      */
 
     public boolean equals(Object o) {
-        // TODO: some code goes here
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TupleDesc tupleDesc = (TupleDesc) o;
+        return Objects.equals(items, tupleDesc.items);
     }
 
     public int hashCode() {
-        // If you want to use TupleDesc as keys for HashMap, implement this so
-        // that equal objects have equals hashCode() results
-        throw new UnsupportedOperationException("unimplemented");
+        return Objects.hash(items);
     }
 
     /**
@@ -170,7 +211,25 @@ public class TupleDesc implements Serializable {
      * @return String describing this descriptor.
      */
     public String toString() {
-        // TODO: some code goes here
-        return "";
+        StringBuilder sb = new StringBuilder("| ");
+        for (TDItem item : items) {
+            sb.append(item.fieldName);
+            sb.append(" | ");
+        }
+        return sb.toString();
     }
+
+    /**
+     * init the items
+     */
+    private void init() {
+        if (items == null) {
+            synchronized (this) {
+                if (items == null) {
+                    items = new ArrayList<>();
+                }
+            }
+        }
+    }
+
 }
