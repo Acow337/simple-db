@@ -149,7 +149,12 @@ public class TupleDesc implements Serializable {
      * Note that tuples from a given TupleDesc are of a fixed size.
      */
     public int getSize() {
-        return items.size();
+        int length = 0;
+        for (TDItem item : items) {
+            if (item.fieldType != null)
+                length += item.fieldType.getLen();
+        }
+        return length;
     }
 
     /**
@@ -162,8 +167,8 @@ public class TupleDesc implements Serializable {
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         Iterator<TDItem> iterator1 = td1.iterator();
-        Iterator<TDItem> iterator2 = td1.iterator();
-        int size = td1.getSize() + td2.getSize();
+        Iterator<TDItem> iterator2 = td2.iterator();
+        int size = td1.numFields() + td2.numFields();
         int index = 0;
         Type[] types = new Type[size];
         String[] strings = new String[size];
@@ -196,11 +201,22 @@ public class TupleDesc implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TupleDesc tupleDesc = (TupleDesc) o;
-        return Objects.equals(items, tupleDesc.items);
+        if (items.size() != ((TupleDesc) o).items.size()) return false;
+        Iterator<TDItem> iterator1 = items.iterator();
+        Iterator<TDItem> iterator2 = ((TupleDesc) o).iterator();
+        while (iterator1.hasNext()) {
+            if (!iterator1.next().fieldType.equals(iterator2.next().fieldType)) return false;
+        }
+        return true;
     }
 
+    @Override
     public int hashCode() {
-        return Objects.hash(items);
+        int hashCode = 0;
+        for (TDItem item : items) {
+            hashCode ^= item.fieldType.hashCode();
+        }
+        return hashCode;
     }
 
     /**
@@ -211,11 +227,12 @@ public class TupleDesc implements Serializable {
      * @return String describing this descriptor.
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder("| ");
+        StringBuilder sb = new StringBuilder();
         for (TDItem item : items) {
-            sb.append(item.fieldName);
-            sb.append(" | ");
+            sb.append(items.toString());
+            sb.append(", ");
         }
+        sb.delete(sb.length() - 2, sb.length());
         return sb.toString();
     }
 
