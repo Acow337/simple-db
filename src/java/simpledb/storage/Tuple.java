@@ -26,8 +26,12 @@ public class Tuple implements Serializable {
      *           instance with at least one field.
      */
     public Tuple(TupleDesc td) {
+        int numFields = td.numFields();
         tupleDesc = td;
-        fields = new ArrayList<>(tupleDesc.getSize());
+        fields = new ArrayList<>(numFields);
+        for (int i = 0; i < numFields; i++) {
+            fields.add(null);
+        }
     }
 
     /**
