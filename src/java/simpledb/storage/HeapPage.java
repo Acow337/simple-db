@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and
@@ -328,9 +329,44 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        return Arrays.stream(tuples).iterator();
+        return new TupleIterator(this);
     }
 
+    class TupleIterator implements Iterator<Tuple> {
+        HeapPage heapPage;
+        int headerCur;
+        int offset;
+
+        public TupleIterator(HeapPage heapPage) {
+            this.heapPage = heapPage;
+            headerCur = 0;
+            offset = 0;
+        }
+
+        public boolean hasNext() {
+            for (int i = headerCur; i < header.length; i++) {
+                for (int j = offset; i < 8; i++) {
+                    if (((header[i] >> j) & 1) == 1) {
+                        headerCur = i;
+                        offset = j;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public Tuple next() {
+            int index = headerCur * 8 + offset;
+            if (index >= heapPage.tuples.length) return null;
+            offset++;
+            if (offset % 8 == 0) {
+                headerCur++;
+                offset = 0;
+            }
+            return heapPage.tuples[index];
+        }
+    }
 
 }
 
