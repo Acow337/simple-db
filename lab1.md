@@ -513,7 +513,7 @@ entire SimpleDB process. The global catalog can be retrieved via the method
 
 ---
 * src/java/simpledb/common/Catalog.java
---- 
+---
 
 At this point, your code should pass the unit tests in `CatalogTest`.
 
@@ -547,7 +547,6 @@ We have not provided unit tests for `BufferPool`. The functionality you
 implemented will be tested in the implementation of `HeapFile` below. You should
 use the `DbFile.readPage` method to access pages of a `DbFile`.
 
-
 <!--
 When more than this many pages are in the buffer pool, one page should be
 evicted from the pool before the next is loaded.  The choice of eviction
@@ -555,8 +554,8 @@ policy is up to you; it is not necessary to do something sophisticated.
 -->
 
 <!--
-<p>
 
+<p>
 Notice that `BufferPool` asks you to implement
 a `flush_all_pages()` method.  This is not something you would ever
 need in a real implementation of a buffer pool.  However, we need this method
@@ -571,13 +570,13 @@ a specific way. Common access methods include heap files (unsorted files of
 tuples) and B-trees; for this assignment, you will only implement a heap file
 access method, and we have written some of the code for you.
 
-A `HeapFile` object is arranged into a set of pages, each of which consists of a
+**A `HeapFile` object is arranged into a set of pages**, each of which consists of a
 fixed number of bytes for storing tuples, (defined by the constant
 `BufferPool.DEFAULT_PAGE_SIZE`), including a header. In SimpleDB, there is one
 `HeapFile` object for each table in the database. Each page in a `HeapFile` is
 arranged as a set of slots, each of which can hold one tuple (tuples for a given
-table in SimpleDB are all of the same size). In addition to these slots, each
-page has a header that consists of a bitmap with one bit per tuple slot. If the
+table in SimpleDB are all of the same size). In addition to these slots, **each**
+**page has a header that consists of a bitmap with one bit per tuple slot**. If the
 bit corresponding to a particular tuple is 1, it indicates that the tuple is
 valid; if it is 0, the tuple is invalid (e.g., has been deleted or was never
 initialized.) Pages of `HeapFile` objects are of type `HeapPage` which
@@ -615,8 +614,8 @@ store less than a full byte of header information.)
 
 The low (least significant) bits of each byte represents the status of the slots
 that are earlier in the file. Hence, the lowest bit of the first byte represents
-whether or not the first slot in the page is in use. The second lowest bit of
-the first byte represents whether or not the second slot in the page is in use,
+whether or not the first slot in the page is in use. **The second lowest bit of**
+**the first byte represents whether or not the second slot in the page is in use**,
 and so on. Also, note that the high-order bits of the last byte may not
 correspond to a slot that is actually in the file, since the number of slots may
 not be a multiple of 8. Also note that all Java virtual machines are
@@ -654,7 +653,7 @@ file. You will then be able to fetch tuples from a file stored on disk.
 
 ---
 * src/java/simpledb/storage/HeapFile.java
---- 
+---
 
 To read a page from disk, you will first need to calculate the correct offset in
 the file. Hint: you will need random access to the file in order to read and

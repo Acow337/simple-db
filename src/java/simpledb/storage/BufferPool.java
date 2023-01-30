@@ -31,6 +31,9 @@ public class BufferPool {
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
 
+    private int maxNum;
+    private List<Page> pages;
+
     /**
      * Default number of pages passed to the constructor. This is used by
      * other classes. BufferPool should use the numPages argument to the
@@ -44,7 +47,7 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // TODO: some code goes here
+        maxNum = numPages;
     }
 
     public static int getPageSize() {
@@ -78,7 +81,9 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-        // TODO: some code goes here
+        for (Page page : pages) {
+            if (page.getId().equals(pid)) return page;
+        }
         return null;
     }
 

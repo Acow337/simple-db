@@ -12,6 +12,7 @@ public class RecordId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private PageId pageId;
+    private int tupleNum;
 
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
@@ -22,14 +23,14 @@ public class RecordId implements Serializable {
      */
     public RecordId(PageId pid, int tupleno) {
         pageId = pid;
+        tupleNum = tupleno;
     }
 
     /**
      * @return the tuple number this RecordId references.
      */
     public int getTupleNumber() {
-        // TODO: some code goes here
-        return 0;
+        return tupleNum;
     }
 
     /**
@@ -44,11 +45,11 @@ public class RecordId implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RecordId recordId = (RecordId) o;
-        return pageId.equals(recordId.pageId);
+        return tupleNum == recordId.tupleNum && pageId.equals(recordId.pageId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pageId);
+        return Objects.hash(pageId, tupleNum);
     }
 }
