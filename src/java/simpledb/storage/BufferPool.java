@@ -48,6 +48,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         maxNum = numPages;
+        pages = new ArrayList<>();
     }
 
     public static int getPageSize() {
@@ -81,6 +82,13 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
+        for (Page page : pages) {
+            if (page.getId().equals(pid)) return page;
+        }
+        return Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+    }
+
+    public Page getPage(PageId pid) {
         for (Page page : pages) {
             if (page.getId().equals(pid)) return page;
         }
