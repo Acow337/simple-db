@@ -40,8 +40,8 @@ public class HeapFile implements DbFile {
         tupleDesc = td;
         id = file.getAbsoluteFile().hashCode();
         int i = 0;
-        System.out.println(file.length());
-        System.out.println(numPages());
+//        System.out.println(file.length());
+//        System.out.println(numPages());
     }
 
     /**
