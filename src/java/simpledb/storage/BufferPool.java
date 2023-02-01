@@ -85,7 +85,9 @@ public class BufferPool {
         for (Page page : pages) {
             if (page.getId().equals(pid)) return page;
         }
-        return Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+        pages.add(page);
+        return page;
     }
 
     public Page getPage(PageId pid) {

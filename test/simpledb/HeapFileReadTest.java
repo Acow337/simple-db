@@ -87,7 +87,7 @@ public class HeapFileReadTest extends SimpleDbTestBase {
 
     @Test
     public void testIteratorBasic() throws Exception {
-        int rows = 70;
+        int rows = 1000;
         HeapFile smallFile = SystemTestUtil.createRandomHeapFile(2, rows, null,
                 null);
 
