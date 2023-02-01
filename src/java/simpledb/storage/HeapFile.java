@@ -40,6 +40,8 @@ public class HeapFile implements DbFile {
         tupleDesc = td;
         id = file.getAbsoluteFile().hashCode();
         int i = 0;
+        System.out.println(file.length());
+        System.out.println(numPages());
     }
 
     /**
@@ -160,7 +162,7 @@ public class HeapFile implements DbFile {
             if (pageCur >= pageNum) return false;
             curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), null);
             curIterator = curPage.iterator();
-            return false;
+            return true;
         }
 
         public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {

@@ -249,4 +249,16 @@ public class TupleDesc implements Serializable {
         }
     }
 
+    public TupleDesc getTupleDescWithAlias(String alias) {
+        String[] fieldNames = new String[numFields()];
+        Type[] types = new Type[numFields()];
+        int i = 0;
+        for (TDItem item : items) {
+            fieldNames[i] = alias + "." + item.fieldName;
+            types[i] = item.fieldType;
+            i++;
+        }
+        return new TupleDesc(types, fieldNames);
+    }
+
 }

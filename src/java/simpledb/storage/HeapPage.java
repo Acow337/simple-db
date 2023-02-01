@@ -70,6 +70,10 @@ public class HeapPage implements Page {
         dis.close();
 
         setBeforeImage();
+        System.out.println("pageId : " + pid);
+        System.out.println("slot nums : " + numSlots);
+        System.out.println("unusedSlots : " + getNumUnusedSlots());
+        System.out.println("header length : " + header.length);
     }
 
     /**
@@ -345,7 +349,7 @@ public class HeapPage implements Page {
 
         public boolean hasNext() {
             for (int i = headerCur; i < header.length; i++) {
-                for (int j = offset; i < 8; i++) {
+                for (int j = offset; j < 8; j++) {
                     if (((header[i] >> j) & 1) == 1) {
                         headerCur = i;
                         offset = j;
@@ -360,7 +364,7 @@ public class HeapPage implements Page {
             int index = headerCur * 8 + offset;
             if (index >= heapPage.tuples.length) return null;
             offset++;
-            if (offset % 8 == 0) {
+            if (offset >= 8) {
                 headerCur++;
                 offset = 0;
             }

@@ -7,11 +7,13 @@ import simpledb.systemtest.SimpleDbTestBase;
 import simpledb.systemtest.SystemTestUtil;
 
 import java.util.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+
 import junit.framework.JUnit4TestAdapter;
 import simpledb.transaction.TransactionId;
 
@@ -25,7 +27,8 @@ public class HeapFileReadTest extends SimpleDbTestBase {
      */
     @Before
     public void setUp() throws Exception {
-        hf = SystemTestUtil.createRandomHeapFile(2, 20, null, null);
+        int rows = 20;// initially 20
+        hf = SystemTestUtil.createRandomHeapFile(2, rows, null, null);
         td = Utility.getTupleDesc(2);
         tid = new TransactionId();
     }
@@ -55,8 +58,9 @@ public class HeapFileReadTest extends SimpleDbTestBase {
      */
     @Test
     public void getTupleDesc() {
-        assertEquals(td, hf.getTupleDesc());        
+        assertEquals(td, hf.getTupleDesc());
     }
+
     /**
      * Unit test for HeapFile.numPages()
      */
@@ -83,7 +87,8 @@ public class HeapFileReadTest extends SimpleDbTestBase {
 
     @Test
     public void testIteratorBasic() throws Exception {
-        HeapFile smallFile = SystemTestUtil.createRandomHeapFile(2, 3, null,
+        int rows = 70;
+        HeapFile smallFile = SystemTestUtil.createRandomHeapFile(2, rows, null,
                 null);
 
         DbFileIterator it = smallFile.iterator(tid);
@@ -101,7 +106,7 @@ public class HeapFileReadTest extends SimpleDbTestBase {
             assertNotNull(it.next());
             count += 1;
         }
-        assertEquals(3, count);
+        assertEquals(rows, count);
         it.close();
     }
 
