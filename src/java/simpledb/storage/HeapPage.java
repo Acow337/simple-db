@@ -70,10 +70,10 @@ public class HeapPage implements Page {
         dis.close();
 
         setBeforeImage();
-        System.out.println("pageId : " + pid);
-        System.out.println("slot nums : " + numSlots);
-        System.out.println("unusedSlots : " + getNumUnusedSlots());
-        System.out.println("header length : " + header.length);
+//        System.out.println("pageId : " + pid);
+//        System.out.println("slot nums : " + numSlots);
+//        System.out.println("unusedSlots : " + getNumUnusedSlots());
+//        System.out.println("header length : " + header.length);
     }
 
     /**
