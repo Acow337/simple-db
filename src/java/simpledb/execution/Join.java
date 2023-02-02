@@ -105,12 +105,12 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         if (curTuple == null) return null;
         Tuple t1 = curTuple;
+        Tuple t2 = child2.next();
         if (!child2.hasNext()) {
             child2.rewind();
             if (child1.hasNext()) curTuple = child1.next();
             else curTuple = null;
         }
-        Tuple t2 = child2.next();
         int index = 0;
         if (predicate.filter(t1, t2)) {
             Tuple tuple = new Tuple(tupleDesc);
@@ -123,11 +123,6 @@ public class Join extends Operator {
             while (iterator2.hasNext()) {
                 tuple.setField(index, iterator2.next());
                 index++;
-            }
-            if (!child2.hasNext()) {
-                child2.rewind();
-                if (child1.hasNext()) curTuple = child1.next();
-                else curTuple = null;
             }
             return tuple;
         }

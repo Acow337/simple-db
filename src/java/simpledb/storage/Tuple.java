@@ -101,4 +101,13 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td) {
         tupleDesc = td;
     }
+
+    public String toValueString() {
+        StringBuilder sb = new StringBuilder();
+        for (Field f : fields) {
+            sb.append(f.toString());
+            sb.append(" ");
+        }
+        return sb.toString();
+    }
 }
