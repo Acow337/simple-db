@@ -68,6 +68,7 @@ public class Join extends Operator {
     public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
         child1.open();
         child2.open();
+        if (child1.hasNext()) curTuple = child1.next();
         super.open();
     }
 
@@ -80,6 +81,7 @@ public class Join extends Operator {
     public void rewind() throws DbException, TransactionAbortedException {
         child1.rewind();
         child2.rewind();
+        if (child1.hasNext()) curTuple = child1.next();
     }
 
     /**
@@ -103,6 +105,11 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         if (curTuple == null) return null;
         Tuple t1 = curTuple;
+        if (!child2.hasNext()) {
+            child2.rewind();
+            if (child1.hasNext()) curTuple = child1.next();
+            else curTuple = null;
+        }
         Tuple t2 = child2.next();
         int index = 0;
         if (predicate.filter(t1, t2)) {
@@ -119,10 +126,8 @@ public class Join extends Operator {
             }
             if (!child2.hasNext()) {
                 child2.rewind();
-                if (child1.hasNext())
-                    curTuple = child1.next();
-                else
-                    curTuple = null;
+                if (child1.hasNext()) curTuple = child1.next();
+                else curTuple = null;
             }
             return tuple;
         }
