@@ -41,7 +41,7 @@ public class Filter extends Operator {
     }
 
     public TupleDesc getTupleDesc() {
-        return null;
+        return td;
     }
 
     public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
