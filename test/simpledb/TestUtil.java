@@ -112,7 +112,6 @@ public class TestUtil {
             throws DbException, TransactionAbortedException {
         while (expected.hasNext()) {
             assertTrue(actual.hasNext());
-
             Tuple expectedTup = expected.next();
             Tuple actualTup = actual.next();
             assertTrue(compareTuples(expectedTup, actualTup));

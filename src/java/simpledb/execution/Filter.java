@@ -19,7 +19,6 @@ public class Filter extends Operator {
 
     private Predicate predicate;
     private OpIterator child;
-    private Iterator<Tuple> it;
     private final TupleDesc td;
     private final List<Tuple> childTups = new ArrayList<>();
 
@@ -46,20 +45,16 @@ public class Filter extends Operator {
 
     public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
         child.open();
-        // load all the tuples in a collection
-        while (child.hasNext())
-            childTups.add(child.next());
-        it = childTups.iterator();
         super.open();
     }
 
     public void close() {
+        child.close();
         super.close();
-        it = null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        it = childTups.iterator();
+        child.rewind();
     }
 
     /**
@@ -72,10 +67,12 @@ public class Filter extends Operator {
      * @see Predicate#filter
      */
     protected Tuple fetchNext() throws NoSuchElementException, TransactionAbortedException, DbException {
-        if (it != null && it.hasNext()) {
-            return it.next();
-        } else
-            return null;
+        if (child.hasNext()) {
+            Tuple t = child.next();
+            if (!predicate.filter(t)) return fetchNext();
+            else return t;
+        }
+        return null;
     }
 
     @Override
