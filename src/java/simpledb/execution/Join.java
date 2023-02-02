@@ -1,10 +1,12 @@
 package simpledb.execution;
 
 import simpledb.common.DbException;
+import simpledb.storage.Field;
 import simpledb.storage.Tuple;
 import simpledb.storage.TupleDesc;
 import simpledb.transaction.TransactionAbortedException;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -13,6 +15,12 @@ import java.util.NoSuchElementException;
 public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
+
+    JoinPredicate predicate;
+    OpIterator child1;
+    OpIterator child2;
+    TupleDesc tupleDesc;
+    Tuple curTuple;
 
     /**
      * Constructor. Accepts two children to join and the predicate to join them
@@ -23,52 +31,55 @@ public class Join extends Operator {
      * @param child2 Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, OpIterator child1, OpIterator child2) {
-        // TODO: some code goes here
+        predicate = p;
+        this.child1 = child1;
+        this.child2 = child2;
+        tupleDesc = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
     }
 
     public JoinPredicate getJoinPredicate() {
-        // TODO: some code goes here
-        return null;
+        return predicate;
     }
 
     /**
      * @return the field name of join field1. Should be quantified by
-     *         alias or table name.
+     * alias or table name.
      */
     public String getJoinField1Name() {
-        // TODO: some code goes here
-        return null;
+        return child1.getTupleDesc().getFieldName(predicate.field1);
     }
 
     /**
      * @return the field name of join field2. Should be quantified by
-     *         alias or table name.
+     * alias or table name.
      */
     public String getJoinField2Name() {
-        // TODO: some code goes here
-        return null;
+        return child2.getTupleDesc().getFieldName(predicate.field2);
     }
 
     /**
      * @see TupleDesc#merge(TupleDesc, TupleDesc) for possible
-     *         implementation logic.
+     * implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // TODO: some code goes here
-        return null;
+        return tupleDesc;
     }
 
-    public void open() throws DbException, NoSuchElementException,
-            TransactionAbortedException {
-        // TODO: some code goes here
+    public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
+        child1.open();
+        child2.open();
+        super.open();
     }
 
     public void close() {
-        // TODO: some code goes here
+        child1.close();
+        child2.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // TODO: some code goes here
+        child1.rewind();
+        child2.rewind();
     }
 
     /**
@@ -90,19 +101,43 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // TODO: some code goes here
-        return null;
+        if (curTuple == null) return null;
+        Tuple t1 = curTuple;
+        Tuple t2 = child2.next();
+        int index = 0;
+        if (predicate.filter(t1, t2)) {
+            Tuple tuple = new Tuple(tupleDesc);
+            Iterator<Field> iterator1 = t1.fields();
+            Iterator<Field> iterator2 = t2.fields();
+            while (iterator1.hasNext()) {
+                tuple.setField(index, iterator1.next());
+                index++;
+            }
+            while (iterator2.hasNext()) {
+                tuple.setField(index, iterator2.next());
+                index++;
+            }
+            if (!child2.hasNext()) {
+                child2.rewind();
+                if (child1.hasNext())
+                    curTuple = child1.next();
+                else
+                    curTuple = null;
+            }
+            return tuple;
+        }
+        return fetchNext();
     }
 
     @Override
     public OpIterator[] getChildren() {
-        // TODO: some code goes here
-        return null;
+        return new OpIterator[]{child1, child2};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-        // TODO: some code goes here
+        child1 = children[0];
+        child2 = children[1];
     }
 
 }
