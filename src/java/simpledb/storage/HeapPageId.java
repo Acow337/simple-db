@@ -22,6 +22,11 @@ public class HeapPageId implements PageId {
         pageNum = pgNo;
     }
 
+    public HeapPageId() {
+        tableId = -1;
+        pageNum = -1;
+    }
+
     /**
      * @return the table associated with this PageId
      */

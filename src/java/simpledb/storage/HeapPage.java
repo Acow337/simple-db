@@ -287,10 +287,15 @@ public class HeapPage implements Page {
             throw new DbException("the page is full");
         if (!td.equals(t.getTupleDesc()))
             throw new DbException("tupledesc is mismatch");
-        System.out.println("before: " + isSlotUsed(t.getRecordId().getTupleNumber()));
-        tuples[t.getRecordId().getTupleNumber()] = t;
-        markSlotUsed(t.getRecordId().getTupleNumber(), true);
-        System.out.println("after: " + isSlotUsed(t.getRecordId().getTupleNumber()));
+//        System.out.println("before: " + isSlotUsed(t.getRecordId().getTupleNumber()));
+        int i = t.getRecordId().getTupleNumber();
+        if (isSlotUsed(t.getRecordId().getTupleNumber())) {
+            i = getUnusedSlot();
+            t.setRecordId(new RecordId(new HeapPageId(), i));
+        }
+        tuples[i] = t;
+        markSlotUsed(i, true);
+//        System.out.println("after: " + isSlotUsed(t.getRecordId().getTupleNumber()));
     }
 
     /**
@@ -344,6 +349,16 @@ public class HeapPage implements Page {
         int a = i / 8;
         int b = i % 8;
         header[a] = value ? (byte) (header[a] | (0x1 << b)) : (byte) (header[a] & (~(0x1 << b)));
+    }
+
+    private int getUnusedSlot() {
+        for (int i = 0; i < header.length; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (((header[i] >> j) & 1) == 0)
+                    return i * 8 + j;
+            }
+        }
+        return -1;
     }
 
     /**
