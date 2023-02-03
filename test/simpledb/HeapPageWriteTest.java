@@ -28,15 +28,17 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
     /**
      * Set up initial resources for each unit test.
      */
-    @Before public void addTable() {
+    @Before
+    public void addTable() {
         this.pid = new HeapPageId(-1, -1);
         Database.getCatalog().addTable(new SkeletonFile(-1, Utility.getTupleDesc(2)), SystemTestUtil.getUUID());
     }
-    
+
     /**
      * Unit test for HeapPage.isDirty()
      */
-    @Test public void testDirty() throws Exception {
+    @Test
+    public void testDirty() throws Exception {
         TransactionId tid = new TransactionId();
         HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
         page.markDirty(true, tid);
@@ -52,21 +54,24 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
     /**
      * Unit test for HeapPage.addTuple()
      */
-    @Test public void addTuple() throws Exception {
+    @Test
+    public void addTuple() throws Exception {
         HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
         int free = page.getNumUnusedSlots();
+        System.out.println("free: " + free);
 
         // NOTE(ghuo): this nested loop existence check is slow, but it
         // shouldn't make a difference for n = 504 slots.
 
         for (int i = 0; i < free; ++i) {
+            System.out.println("i: " + i);
             Tuple addition = Utility.getHeapTuple(i, 2);
             page.insertTuple(addition);
-            assertEquals(free-i-1, page.getNumUnusedSlots());
+            assertEquals(free - i - 1, page.getNumUnusedSlots());
 
             // loop through the iterator to ensure that the tuple actually exists
             // on the page
-            Iterator<Tuple >it = page.iterator();
+            Iterator<Tuple> it = page.iterator();
             boolean found = false;
             while (it.hasNext()) {
                 Tuple tup = it.next();
@@ -93,8 +98,8 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
     /**
      * Unit test for HeapPage.deleteTuple() with false tuples
      */
-    @Test(expected=DbException.class)
-        public void deleteNonexistentTuple() throws Exception {
+    @Test(expected = DbException.class)
+    public void deleteNonexistentTuple() throws Exception {
         HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
         page.deleteTuple(Utility.getHeapTuple(2, 2));
     }
@@ -102,7 +107,8 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
     /**
      * Unit test for HeapPage.deleteTuple()
      */
-    @Test public void deleteTuple() throws Exception {
+    @Test
+    public void deleteTuple() throws Exception {
         HeapPage page = new HeapPage(pid, HeapPageReadTest.EXAMPLE_DATA);
         int free = page.getNumUnusedSlots();
 

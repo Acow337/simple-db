@@ -264,6 +264,8 @@ public class HeapPage implements Page {
      *                     already empty.
      */
     public void deleteTuple(Tuple t) throws DbException {
+        if (getNumUnusedSlots() == tuples.length)
+            throw new DbException("page is empty");
         int i = t.getRecordId().getTupleNumber();
         int a = i / 8;
         int b = i % 8;
@@ -281,9 +283,12 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         if (isFull())
             throw new DbException("the page is full");
-        if (!td.equals(t))
+        if (!td.equals(t.getTupleDesc()))
             throw new DbException("tupledesc is mismatch");
+        System.out.println("before: " + isSlotUsed(t.getRecordId().getTupleNumber()));
         tuples[t.getRecordId().getTupleNumber()] = t;
+        markSlotUsed(t.getRecordId().getTupleNumber(), true);
+        System.out.println("after: " + isSlotUsed(t.getRecordId().getTupleNumber()));
     }
 
     /**
