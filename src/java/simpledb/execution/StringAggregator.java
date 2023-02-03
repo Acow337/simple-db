@@ -10,6 +10,11 @@ public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
 
+    int groupByField;
+    Type groupByFieldType;
+    int aggField;
+    Op op;
+
     /**
      * Aggregate constructor
      *
@@ -21,7 +26,10 @@ public class StringAggregator implements Aggregator {
      */
 
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // TODO: some code goes here
+        groupByField = gbfield;
+        groupByFieldType = gbfieldtype;
+        aggField = afield;
+        op = what;
     }
 
     /**
@@ -30,16 +38,16 @@ public class StringAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // TODO: some code goes here
+
     }
 
     /**
      * Create a OpIterator over group aggregate results.
      *
      * @return a OpIterator whose tuples are the pair (groupVal,
-     *         aggregateVal) if using group, or a single (aggregateVal) if no
-     *         grouping. The aggregateVal is determined by the type of
-     *         aggregate specified in the constructor.
+     * aggregateVal) if using group, or a single (aggregateVal) if no
+     * grouping. The aggregateVal is determined by the type of
+     * aggregate specified in the constructor.
      */
     public OpIterator iterator() {
         // TODO: some code goes here
