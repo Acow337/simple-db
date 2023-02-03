@@ -8,10 +8,7 @@ import simpledb.transaction.TransactionId;
 import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
@@ -115,16 +112,22 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public List<Page> insertTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
-        // TODO: some code goes here
-        return null;
-        // not necessary for lab1
+        List<Page> dirtyPages = new ArrayList<>();
+        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+        page.insertTuple(t);
+        page.markDirty(true, tid);
+        dirtyPages.add(page);
+        return dirtyPages;
     }
 
     // see DbFile.java for javadocs
     public List<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
-        // TODO: some code goes here
-        return null;
-        // not necessary for lab1
+        List<Page> dirtyPages = new ArrayList<>();
+        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+        page.deleteTuple(t);
+        page.markDirty(true, tid);
+        dirtyPages.add(page);
+        return dirtyPages;
     }
 
     // see DbFile.java for javadocs
