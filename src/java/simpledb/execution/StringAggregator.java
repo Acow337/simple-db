@@ -1,7 +1,12 @@
 package simpledb.execution;
 
 import simpledb.common.Type;
-import simpledb.storage.Tuple;
+import simpledb.storage.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Knows how to compute some aggregate over a set of StringFields.
@@ -14,6 +19,10 @@ public class StringAggregator implements Aggregator {
     Type groupByFieldType;
     int aggField;
     Op op;
+    // groupBy field as the key
+    Map<Field, List<StringField>> map;
+    List<Tuple> tuples;
+    TupleDesc tupleDesc;
 
     /**
      * Aggregate constructor
@@ -30,6 +39,8 @@ public class StringAggregator implements Aggregator {
         groupByFieldType = gbfieldtype;
         aggField = afield;
         op = what;
+        map = new HashMap<>();
+        tupleDesc = new TupleDesc(new Type[]{groupByFieldType, Type.INT_TYPE});
     }
 
     /**
@@ -38,7 +49,10 @@ public class StringAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-
+        Field f = tup.getField(groupByField);
+        if (!map.containsKey(f))
+            map.put(f, new ArrayList<>());
+        map.get(f).add((StringField) tup.getField(aggField));
     }
 
     /**
@@ -50,8 +64,32 @@ public class StringAggregator implements Aggregator {
      * aggregate specified in the constructor.
      */
     public OpIterator iterator() {
-        // TODO: some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+        if (tuples != null)
+            return new TupleIterator(tuples.get(0).getTupleDesc(), tuples);
+        // foreach the group and calculate the aggregate value of each group
+        tuples = new ArrayList<>();
+        for (Field f : map.keySet()) {
+            IntField res = calculate(map.get(f));
+            Tuple t = new Tuple(tupleDesc);
+            t.setField(0, f);
+            t.setField(1, res);
+            tuples.add(t);
+        }
+        return iterator();
+    }
+
+    public IntField calculate(List<StringField> fields) {
+        if (fields == null || fields.size() == 0)
+            return null;
+        int v;
+        switch (op) {
+            case COUNT:
+                v = fields.size();
+                break;
+            default:
+                throw new UnsupportedOperationException();
+        }
+        return new IntField(v);
     }
 
 }

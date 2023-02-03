@@ -19,6 +19,7 @@ public class IntegerAggregator implements Aggregator {
     Type groupByFieldType;
     int aggField;
     Op op;
+    // groupBy field as the key
     Map<Field, List<IntField>> map;
     List<Tuple> tuples;
     TupleDesc tupleDesc;
@@ -117,7 +118,7 @@ public class IntegerAggregator implements Aggregator {
             case COUNT:
                 v = fields.size();
             default:
-                return null;
+                throw new UnsupportedOperationException();
         }
         return new IntField(v);
     }

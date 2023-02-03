@@ -110,6 +110,7 @@ public class Aggregate extends Operator {
         super.open();
         while (child.hasNext()) aggregator.mergeTupleIntoGroup(child.next());
         aggIterator = aggregator.iterator();
+        aggIterator.open();
     }
 
     /**
@@ -147,6 +148,7 @@ public class Aggregate extends Operator {
     public void close() {
         child.close();
         super.close();
+        aggIterator.close();
     }
 
     @Override
