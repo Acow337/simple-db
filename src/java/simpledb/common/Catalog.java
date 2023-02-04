@@ -108,7 +108,7 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         DbFile dbFile = idTableMap.get(tableid);
-        if (dbFile == null) throw new NoSuchElementException();
+        if (dbFile == null) throw new NoSuchElementException("tableId: " + tableid);
         return dbFile;
     }
 

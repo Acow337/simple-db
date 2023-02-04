@@ -90,7 +90,7 @@ public class HeapFile implements DbFile {
             channel.close();
             return new HeapPage((HeapPageId) pid, result);
         } catch (IOException e) {
-            System.out.println("readPage 出现IO错误");
+            System.out.println("readPage 出现IO错误 " + " fileSize: " + file.length() + " index: " + pid.getPageNumber() * pageSize);
         }
         return null;
     }
@@ -142,6 +142,8 @@ public class HeapFile implements DbFile {
             page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), null);
             pageNo++;
         } while (page.isFull());
+        // change the tuple's pageId
+//        t.setRecordId(new RecordId(new HeapPageId(id, pageNo - 1), t.getRecordId().getTupleNumber()));
         page.insertTuple(t);
         page.markDirty(true, tid);
         dirtyPages.add(page);

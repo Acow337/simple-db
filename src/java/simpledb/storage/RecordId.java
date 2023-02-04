@@ -40,6 +40,10 @@ public class RecordId implements Serializable {
         return pageId;
     }
 
+    public void setTupleNum(int i) {
+        tupleNum = i;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

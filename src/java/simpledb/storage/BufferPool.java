@@ -159,8 +159,17 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        for (Page page : pages) {
+            HeapPage p = (HeapPage) page;
+            if (p.getId().getTableId() == tableId && !p.isFull()) {
+                p.insertTuple(t);
+                p.markDirty(true, tid);
+                return;
+            }
+        }
+        // if can't find the page, get page from disk
+        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
+        pages.addAll(modifiedPages);
     }
 
     /**

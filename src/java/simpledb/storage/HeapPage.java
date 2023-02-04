@@ -291,8 +291,9 @@ public class HeapPage implements Page {
         int i = t.getRecordId().getTupleNumber();
         if (isSlotUsed(t.getRecordId().getTupleNumber())) {
             i = getUnusedSlot();
-            t.setRecordId(new RecordId(new HeapPageId(), i));
+            t.getRecordId().setTupleNum(i);
         }
+        t.setRecordId(new RecordId(pid, i));
         tuples[i] = t;
         markSlotUsed(i, true);
 //        System.out.println("after: " + isSlotUsed(t.getRecordId().getTupleNumber()));
