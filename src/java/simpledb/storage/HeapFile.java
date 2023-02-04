@@ -8,6 +8,8 @@ import simpledb.transaction.TransactionId;
 import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 /**
@@ -76,12 +78,13 @@ public class HeapFile implements DbFile {
     public Page readPage(PageId pid) {
 //        Page page = Database.getBufferPool().getPage(pid);
 //        if (page != null) return page;
+        int pageSize = BufferPool.getPageSize();
         try {
             FileChannel channel = new RandomAccessFile(file, "r").getChannel();
-            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, pid.getPageNumber() * BufferPool.getPageSize(), BufferPool.getPageSize()).load();
-            byte[] result = new byte[BufferPool.getPageSize()];
+            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, pid.getPageNumber() * pageSize, pageSize).load();
+            byte[] result = new byte[pageSize];
             if (buffer.remaining() > 0) {
-                buffer.get(result, 0, BufferPool.getPageSize());
+                buffer.get(result, 0, pageSize);
             }
             buffer.clear();
             channel.close();
@@ -99,8 +102,18 @@ public class HeapFile implements DbFile {
      * @throws IOException if the write fails
      */
     public void writePage(Page page) throws IOException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        // if file size is not enough, enlarge it
+        while (numPages() <= page.getId().getPageNumber()) {
+            appendNewPage();
+        }
+        try {
+            RandomAccessFile f = new RandomAccessFile(file, "rw");
+            f.seek(page.getId().getPageNumber() * BufferPool.getPageSize());
+            f.write(page.getPageData());
+            f.close();
+        } catch (IOException e) {
+            System.out.println("writePage 出现IO错误");
+        }
     }
 
     /**
@@ -110,10 +123,25 @@ public class HeapFile implements DbFile {
         return (int) (file.length() / BufferPool.getPageSize());
     }
 
+    public void appendNewPage() throws IOException {
+        Files.write(file.toPath(),
+                HeapPage.createEmptyPageData(),
+                StandardOpenOption.APPEND);
+    }
+
+    // TODO
     // see DbFile.java for javadocs
     public List<Page> insertTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
         List<Page> dirtyPages = new ArrayList<>();
-        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+        HeapPage page;
+        int pageNo = 0;
+        do {
+            if (pageNo >= numPages()) {
+                appendNewPage();
+            }
+            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), null);
+            pageNo++;
+        } while (page.isFull());
         page.insertTuple(t);
         page.markDirty(true, tid);
         dirtyPages.add(page);
