@@ -187,8 +187,17 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        for (Page page : pages) {
+            HeapPage p = (HeapPage) page;
+            if (p.pid.equals(t.getRecordId().getPageId())) {
+                p.deleteTuple(t);
+                p.markDirty(true, tid);
+                return;
+            }
+        }
+        // if can't find the page, get page from disk
+        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+        pages.addAll(modifiedPages);
     }
 
     /**

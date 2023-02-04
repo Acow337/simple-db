@@ -267,8 +267,10 @@ public class HeapPage implements Page {
         if (getNumUnusedSlots() == tuples.length)
             throw new DbException("page is empty");
         int i = t.getRecordId().getTupleNumber();
-        if (!isSlotUsed(i) || !t.equals(tuples[i]))
-            throw new DbException("delete nonexistent tuple");
+        if (!isSlotUsed(i)) {
+            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString());
+            throw new DbException("delete nonexistent tuple !isSlotUsed(i) " + !isSlotUsed(i) + " !t.equals(tuples[i]) " + !t.equals(tuples[i]));
+        }
         int a = i / 8;
         int b = i % 8;
         header[a] = (byte) (header[a] & (~(0x1 << b)));
