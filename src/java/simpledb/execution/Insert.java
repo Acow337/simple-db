@@ -83,7 +83,7 @@ public class Insert extends Operator {
             }
             count++;
         }
-        Tuple res = new Tuple(new TupleDesc(new Type[]{Type.INT_TYPE}));
+        Tuple res = new Tuple(tupleDesc);
         res.setField(0, new IntField(count));
         return res;
     }

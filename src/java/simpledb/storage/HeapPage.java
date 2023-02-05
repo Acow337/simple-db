@@ -290,7 +290,6 @@ public class HeapPage implements Page {
         if (!td.equals(t.getTupleDesc()))
             throw new DbException("tupledesc is mismatch");
 //        System.out.println("before: " + isSlotUsed(t.getRecordId().getTupleNumber()));
-
         int i = t.getRecordId() != null ? t.getRecordId().getTupleNumber() : getUnusedSlot();
         if (isSlotUsed(i)) {
             i = getUnusedSlot();
