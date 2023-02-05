@@ -48,7 +48,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         maxNum = numPages;
-        pages = new ArrayList<>();
+        pages = new ArrayList<>(numPages);
     }
 
     public static int getPageSize() {
@@ -87,6 +87,9 @@ public class BufferPool {
         }
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         pages.add(page);
+        while (pages.size() > maxNum) {
+            evictPage();
+        }
         return page;
     }
 
@@ -170,6 +173,9 @@ public class BufferPool {
         // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         pages.addAll(modifiedPages);
+        while (pages.size() > maxNum) {
+            evictPage();
+        }
     }
 
     /**
@@ -198,6 +204,9 @@ public class BufferPool {
         // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         pages.addAll(modifiedPages);
+        while (pages.size() > maxNum) {
+            evictPage();
+        }
     }
 
     /**
@@ -206,8 +215,14 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        Iterator<Page> it = pages.iterator();
+        while (it.hasNext()) {
+            Page p = it.next();
+            if (p.isDirty() != null) {
+                Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
+                it.remove();
+            }
+        }
     }
 
     /**
@@ -220,8 +235,14 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void removePage(PageId pid) {
-        // TODO: some code goes here
-        // not necessary for lab1
+        int i = 0;
+        for (Page p : pages) {
+            if (p.getId().equals(pid)) {
+                pages.remove(i);
+                return;
+            }
+            i++;
+        }
     }
 
     /**
@@ -230,8 +251,15 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        int i = 0;
+        for (Page p : pages) {
+            if (p.getId().equals(pid)) {
+                Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
+                pages.remove(i);
+                return;
+            }
+            i++;
+        }
     }
 
     /**
@@ -246,9 +274,11 @@ public class BufferPool {
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
+
+    //TODO use LRU
     private synchronized void evictPage() throws DbException {
-        // TODO: some code goes here
-        // not necessary for lab1
+        pages.remove(0);
     }
+
 
 }
