@@ -36,7 +36,6 @@ public class TestUtil {
                 tup.setField(j, getField(tupdata[i++]));
             tuplist.add(tup);
         }
-
         TupleIterator result = new TupleIterator(Utility.getTupleDesc(width), tuplist);
         result.open();
         return result;

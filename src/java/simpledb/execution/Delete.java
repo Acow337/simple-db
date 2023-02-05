@@ -23,6 +23,7 @@ public class Delete extends Operator {
     TransactionId tid;
     OpIterator child;
     static TupleDesc tupleDesc = new TupleDesc(new Type[]{Type.INT_TYPE});
+    boolean isUsed = false;
 
     /**
      * Constructor specifying the transaction that this delete belongs to as
@@ -52,6 +53,7 @@ public class Delete extends Operator {
 
     public void rewind() throws DbException, TransactionAbortedException {
         child.rewind();
+        isUsed = false;
     }
 
     /**
@@ -64,6 +66,7 @@ public class Delete extends Operator {
      * @see BufferPool#deleteTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+        if (isUsed) return null;
         int count = 0;
         while (child.hasNext()) {
             Tuple next = child.next();
@@ -76,6 +79,7 @@ public class Delete extends Operator {
         }
         Tuple res = new Tuple(tupleDesc);
         res.setField(0, new IntField(count));
+        isUsed = true;
         return res;
     }
 

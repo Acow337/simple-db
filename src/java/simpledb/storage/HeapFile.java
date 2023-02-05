@@ -183,7 +183,7 @@ public class HeapFile implements DbFile {
         }
 
         public void open() throws DbException, TransactionAbortedException {
-            curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), null);
+            curPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(heapFile.id, pageCur), null);
             curIterator = curPage.iterator();
             isOpen = true;
         }
@@ -194,6 +194,7 @@ public class HeapFile implements DbFile {
             pageCur++;
             if (pageCur >= pageNum) return false;
             curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), null);
+            if (curPage.isEmpty()) return hasNext();
             curIterator = curPage.iterator();
             return true;
         }

@@ -39,6 +39,7 @@ public class InsertTest extends SimpleDbTestBase {
         boolean hasResult = false;
         while (insOp.hasNext()) {
             Tuple tup = insOp.next();
+            System.out.println("assertFalse");
             assertFalse(hasResult);
             hasResult = true;
             assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, tup.getTupleDesc());

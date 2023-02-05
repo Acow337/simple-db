@@ -336,6 +336,13 @@ public class HeapPage implements Page {
         return getNumUnusedSlots() == 0;
     }
 
+    public boolean isEmpty() {
+        for (byte b : header) {
+            if ((b | 0) != 0) return false;
+        }
+        return true;
+    }
+
     /**
      * Returns true if associated slot on this page is filled.
      */

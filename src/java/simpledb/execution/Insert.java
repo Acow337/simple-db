@@ -24,6 +24,7 @@ public class Insert extends Operator {
     OpIterator child;
     int tableId;
     static TupleDesc tupleDesc = new TupleDesc(new Type[]{Type.INT_TYPE});
+    boolean isUsed = false;
 
     /**
      * Constructor.
@@ -57,6 +58,7 @@ public class Insert extends Operator {
 
     public void rewind() throws DbException, TransactionAbortedException {
         child.rewind();
+        isUsed = false;
     }
 
     /**
@@ -73,6 +75,7 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+        if (isUsed) return null;
         int count = 0;
         while (child.hasNext()) {
             Tuple next = child.next();
@@ -85,6 +88,7 @@ public class Insert extends Operator {
         }
         Tuple res = new Tuple(tupleDesc);
         res.setField(0, new IntField(count));
+        isUsed = true;
         return res;
     }
 
