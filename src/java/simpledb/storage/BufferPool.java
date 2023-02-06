@@ -2,15 +2,12 @@ package simpledb.storage;
 
 import simpledb.common.Database;
 import simpledb.common.DbException;
-import simpledb.common.DeadlockException;
 import simpledb.common.Permissions;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -31,8 +28,8 @@ public class BufferPool {
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
 
-    private int maxNum;
     private List<Page> pages;
+    LRUCache<PageId, Page> LRUCache;
 
     /**
      * Default number of pages passed to the constructor. This is used by
@@ -47,8 +44,8 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        maxNum = numPages;
         pages = new ArrayList<>(numPages);
+        LRUCache = new LRUCache<>(numPages);
     }
 
     public static int getPageSize() {
@@ -80,24 +77,20 @@ public class BufferPool {
      * @param pid  the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-            throws TransactionAbortedException, DbException {
-        for (Page page : pages) {
-            if (page.getId().equals(pid)) return page;
-        }
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
+        if (LRUCache.containsKey(pid))
+            return LRUCache.get(pid);
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-        pages.add(page);
-        while (pages.size() > maxNum) {
-            evictPage();
-        }
+        LRUCache.put(page.getId(), page);
         return page;
     }
 
     public Page getPage(PageId pid) {
-        for (Page page : pages) {
-            if (page.getId().equals(pid)) return page;
-        }
-        return null;
+        if (LRUCache.containsKey(pid))
+            return LRUCache.get(pid);
+        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+        LRUCache.put(page.getId(), page);
+        return page;
     }
 
     /**
@@ -160,21 +153,17 @@ public class BufferPool {
      * @param tableId the table to add the tuple to
      * @param t       the tuple to add
      */
-    public void insertTuple(TransactionId tid, int tableId, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
-        for (Page page : pages) {
-            HeapPage p = (HeapPage) page;
-            if (p.getId().getTableId() == tableId && !p.isFull()) {
-                p.insertTuple(t);
-                p.markDirty(true, tid);
-                return;
-            }
+    public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
+        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
+        if (p != null) {
+            p.insertTuple(t);
+            p.markDirty(true, tid);
+            return;
         }
         // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
-        pages.addAll(modifiedPages);
-        while (pages.size() > maxNum) {
-            evictPage();
+        for (Page page : modifiedPages) {
+            LRUCache.put(page.getId(), page);
         }
     }
 
@@ -191,21 +180,17 @@ public class BufferPool {
      * @param tid the transaction deleting the tuple.
      * @param t   the tuple to delete
      */
-    public void deleteTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
-        for (Page page : pages) {
-            HeapPage p = (HeapPage) page;
-            if (p.pid.equals(t.getRecordId().getPageId())) {
-                p.deleteTuple(t);
-                p.markDirty(true, tid);
-                return;
-            }
+    public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
+        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
+        if (p != null) {
+            p.deleteTuple(t);
+            p.markDirty(true, tid);
+            return;
         }
         // if can't find the page, get page from disk
-        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
-        pages.addAll(modifiedPages);
-        while (pages.size() > maxNum) {
-            evictPage();
+        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).insertTuple(tid, t);
+        for (Page page : modifiedPages) {
+            LRUCache.put(page.getId(), page);
         }
     }
 
@@ -215,7 +200,7 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        Iterator<Page> it = pages.iterator();
+        Iterator<Page> it = LRUCache.valueIterator();
         while (it.hasNext()) {
             Page p = it.next();
             if (p.isDirty() != null) {
@@ -235,14 +220,7 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void removePage(PageId pid) {
-        int i = 0;
-        for (Page p : pages) {
-            if (p.getId().equals(pid)) {
-                pages.remove(i);
-                return;
-            }
-            i++;
-        }
+        LRUCache.remove(pid);
     }
 
     /**
@@ -251,15 +229,9 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        int i = 0;
-        for (Page p : pages) {
-            if (p.getId().equals(pid)) {
-                Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
-                pages.remove(i);
-                return;
-            }
-            i++;
-        }
+        Page p = LRUCache.get(pid);
+        Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
+        LRUCache.remove(pid);
     }
 
     /**
@@ -274,11 +246,23 @@ public class BufferPool {
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-
     //TODO use LRU
     private synchronized void evictPage() throws DbException {
         pages.remove(0);
     }
 
-
 }
+
+
+class PageIdNode {
+    public PageIdNode next;
+    public PageIdNode pre;
+    public PageId pageId;
+
+    PageIdNode(PageId pageId) {
+        this.pageId = pageId;
+    }
+}
+
+
+

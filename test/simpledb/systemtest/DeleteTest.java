@@ -27,7 +27,6 @@ public class DeleteTest extends FilterBase {
         Filter filter = new Filter(predicate, ss);
         Delete deleteOperator = new Delete(tid, filter);
 //        Query q = new Query(deleteOperator, tid);
-
 //        q.start();
         deleteOperator.open();
         boolean hasResult = false;
@@ -40,7 +39,6 @@ public class DeleteTest extends FilterBase {
             result = ((IntField) t.getField(0)).getValue();
         }
         assertTrue(hasResult);
-
         deleteOperator.close();
 
         // As part of the same transaction, scan the table
