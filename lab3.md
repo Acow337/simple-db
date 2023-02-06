@@ -27,7 +27,6 @@ for lab 3, switch to the `lab3` branch (`git checkout lab3`).
 
 ------
 
-
 You should begin with the code you submitted for Lab 2. (If you did not submit
 code for Lab 2, or your solution didn't work properly, contact us to discuss
 options.)
@@ -85,14 +84,15 @@ review the [lab 2 parser
 exercise](https://github.com/MIT-DB-Class/simple-db-hw-2022/blob/master/lab2.md#27-query-parser)
 before starting this lab. Briefly, if you have a catalog file `catalog.txt`
 describing your tables, you can run the parser by typing:
+
 ```bash
 java -jar dist/simpledb.jar parser catalog.txt
 ```
 
 When the `Parser` is invoked, it will compute statistics over all of the tables
-(using statistics code you provide). When a query is issued, the parser will
-convert the query into a logical plan representation and then call your query
-optimizer to generate an optimal plan.
+(using statistics code you provide). **When a query is issued, the parser will**
+**convert the query into a logical plan representation and then call your query**
+**optimizer to generate an optimal plan.**
 
 ### 2.1 Overall Optimizer Structure
 Before getting started with the implementation, you need to understand the
@@ -178,10 +178,10 @@ be trickier -- this is the *filter selectivity estimation* problem.  Here's one
 approach that you might use, based on computing a histogram over the values in
 the table:
 
-*  Compute the minimum and maximum values for every attribute in the table (by
+*  Compute the **minimum** **and maximum values** for every attribute in the table (by
    scanning it once).
 *  Construct a histogram for every attribute in the table. A simple
-   approach is to use a fixed number of buckets *NumB*, with each bucket
+   approach is to use **a fixed number of buckets** *NumB*, with each bucket
    representing the number of records in a fixed range of the domain of the
    attribute of the histogram.  For example, if a field
    *f* ranges from 1 to 100, and there are 10 buckets, then bucket 1 might
@@ -192,14 +192,14 @@ the table:
    histogram.
 *  To estimate the selectivity of an equality expression, *f = const*, compute the
    bucket that contains value *const*. Suppose the width (range of values) of
-   the bucket is *w*, the height (number of tuples) is *h*, and the number of
-   tuples in the table is *ntups*.  Then, assuming values are uniformly
+   the bucket is *w*, the height (number of tuples) is ***h***, and the number of
+   tuples in the table is ***ntups***.  Then, assuming values are uniformly
    distributed throughout the bucket, the selectivity of the expression is
-   roughly *(h / w) / ntups*, since *(h/w)* represents the expected number of
+   roughly ***(h / w) / ntups***, since *(h/w)* represents the expected number of
    tuples in the bin with value *const*.
 *  To estimate the selectivity of a range expression *f > const*, compute the
    bucket *b* that *const* is in, with width *w_b* and height
-   *h_b*.  Then, *b* contains a fraction <nobr>*b_f = h_b / ntups* </nobr>of the
+   *h_b*.  Then, *b* contains a fraction <nobr>***b_f = h_b / ntups*** </nobr>of the
    total tuples.  Assuming tuples are uniformly distributed throughout *b*, the
    fraction *b_part* of *b* that is *> const* is <nobr>*(b_right - const) /
    w_b*</nobr>, where *b_right* is the right endpoint of
@@ -217,7 +217,6 @@ the table:
 <img width=400 src="lab3-hist.png"><br>
 <i>Figure 2: Diagram illustrating the histograms you will implement in Lab 5</i>
 </p>
-
 In the next two exercises, you will code to perform selectivity estimation of
 joins and filters.
 
@@ -230,7 +229,6 @@ estimation.  We have provided a skeleton class, `IntHistogram` that will do
 this.  Our intent is that you calculate histograms using the bucket-based method
 described above, but you are free to use some other method so long as it
 provides reasonable selectivity estimates.
-
 
 We have provided a class `StringHistogram` that uses `IntHistogram` to compute
 selecitivites for String predicates.  You may modify `StringHistogram` if you

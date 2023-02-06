@@ -51,7 +51,6 @@ public class LogicalPlan {
         tables = new ArrayList<>();
         subplanMap = new HashMap<>();
         tableMap = new HashMap<>();
-
         selectList = new ArrayList<>();
         this.query = "";
     }
