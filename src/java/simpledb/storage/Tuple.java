@@ -76,6 +76,10 @@ public class Tuple implements Serializable {
         return fields.get(i);
     }
 
+    public List<Field> getAllFields() {
+        return fields;
+    }
+
     /**
      * Returns the contents of this Tuple as a string. Note that to pass the
      * system tests, the format needs to be as follows:

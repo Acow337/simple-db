@@ -25,7 +25,7 @@ public class StringHistogram {
      * Convert a string to an integer, with the property that if the return
      * value(s1) < return value(s2), then s1 < s2
      */
-    private int stringToInt(String s) {
+    public int stringToInt(String s) {
         int i;
         int v = 0;
         for (i = 3; i >= 0; i--) {
@@ -86,10 +86,10 @@ public class StringHistogram {
 
     /**
      * @return the average selectivity of this histogram.
-     *         <p>
-     *         This is not an indispensable method to implement the basic join
-     *         optimization. It may be needed if you want to implement a more
-     *         efficient optimization
+     * <p>
+     * This is not an indispensable method to implement the basic join
+     * optimization. It may be needed if you want to implement a more
+     * efficient optimization
      */
     public double avgSelectivity() {
         return hist.avgSelectivity();
