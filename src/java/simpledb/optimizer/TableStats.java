@@ -243,10 +243,16 @@ public class TableStats {
      *              expected selectivity. You may estimate this value from the histograms.
      */
     public double avgSelectivity(int field, Predicate.Op op) {
-        switch (op) {
-            case NOT_EQUALS:
+        Type type = typeArr[field];
+        switch (type) {
+            case STRING_TYPE:
+                StringHistogram stringHistogram = stringHistogramMap.get(field);
+                return stringHistogram.avgSelectivity();
+            case INT_TYPE:
+                IntHistogram intHistogram = intHistogramMap.get(field);
+                return intHistogram.avgSelectivity();
         }
-        return 1.0;
+        return -1;
     }
 
     /**
