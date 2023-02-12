@@ -28,19 +28,15 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
     /**
      * Given a matrix of tuples from SystemTestUtil.createRandomHeapFile, create
      * an identical HeapFile table
-     * 
-     * @param tuples
-     *            Tuples to create a HeapFile from
-     * @param columns
-     *            Each entry in tuples[] must have
-     *            "columns == tuples.get(i).size()"
-     * @param colPrefix
-     *            String to prefix to the column names (the columns are named
-     *            after their column number by default)
+     *
+     * @param tuples    Tuples to create a HeapFile from
+     * @param columns   Each entry in tuples[] must have
+     *                  "columns == tuples.get(i).size()"
+     * @param colPrefix String to prefix to the column names (the columns are named
+     *                  after their column number by default)
      * @return a new HeapFile containing the specified tuples
-     * @throws IOException
-     *             if a temporary file can't be created to hand to HeapFile to
-     *             open and read its data
+     * @throws IOException if a temporary file can't be created to hand to HeapFile to
+     *                     open and read its data
      */
     public static HeapFile createDuplicateHeapFile(
             List<List<Integer>> tuples, int columns, String colPrefix)
@@ -104,6 +100,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
                     cost2s[i]);
             // assert that he join cost is no less than the total cost of
             // scanning two tables
+            System.out.printf("card1: %d card2: %d cost1: %f cost2: %f ret: %f\n", card1s[i], card2s[i], cost1s[i], cost2s[i], ret[i]);
             Assert.assertTrue(ret[i] > cost1s[i] + cost2s[i]);
         }
         return ret;
@@ -155,7 +152,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
     }
 
     private void checkJoinEstimateCosts(JoinOptimizer jo,
-            LogicalJoinNode equalsJoinNode) {
+                                        LogicalJoinNode equalsJoinNode) {
         int[] card1s = new int[20];
         int[] card2s = new int[card1s.length];
         double[] cost1s = new double[card1s.length];
@@ -231,31 +228,31 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 
         /*
          * Disable these tests as almost any answer could be defensible
-         * 
+         *
          * cardinality = j.estimateJoinCardinality(new
          * LogicalJoinNode(tableName1, tableName2, Integer.toString(3),
          * Integer.toString(4), Predicate.Op.EQUALS),
          * stats1.estimateTableCardinality(0.8),
          * stats2.estimateTableCardinality(0.2), false, false);
-         * 
+         *
          * // We don't specify in what way statistics should be used to improve
          * these estimates. // So, just require that they not be entirely
          * unreasonable. Assert.assertTrue(cardinality > 800);
          * Assert.assertTrue(cardinality <= 2000);
-         * 
+         *
          * cardinality = j.estimateJoinCardinality(new
          * LogicalJoinNode(tableName2, tableName1, Integer.toString(3),
          * Integer.toString(4), Predicate.Op.EQUALS),
          * stats2.estimateTableCardinality(0.2),
          * stats1.estimateTableCardinality(0.8), false, false);
-         * 
+         *
          * Assert.assertTrue(cardinality > 800); Assert.assertTrue(cardinality
          * <= 2000);
          */
 
         cardinality = j.estimateJoinCardinality(new LogicalJoinNode("t1", "t2",
-                "c" + 3, "c" + 4,
-                Predicate.Op.EQUALS), stats1.estimateTableCardinality(0.8),
+                        "c" + 3, "c" + 4,
+                        Predicate.Op.EQUALS), stats1.estimateTableCardinality(0.8),
                 stats2.estimateTableCardinality(0.2), true, false, TableStats
                         .getStatsMap());
 
@@ -263,14 +260,16 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
         // be size of fk table)
         // BUT we had a bug in lab 4 in 2009 that suggested should be size of pk
         // table, so accept either
+        System.out.println("current cardinality: " + cardinality);
         Assert.assertTrue(cardinality == 800 || cardinality == 2000);
 
         cardinality = j.estimateJoinCardinality(new LogicalJoinNode("t1", "t2",
-                "c" + 3, "c" + 4,
-                Predicate.Op.EQUALS), stats1.estimateTableCardinality(0.8),
+                        "c" + 3, "c" + 4,
+                        Predicate.Op.EQUALS), stats1.estimateTableCardinality(0.8),
                 stats2.estimateTableCardinality(0.2), false, true, TableStats
                         .getStatsMap());
 
+        System.out.println("current cardinality: " + cardinality);
         Assert.assertTrue(cardinality == 800 || cardinality == 2000);
     }
 
@@ -619,13 +618,15 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
-        result = j.orderJoins(stats, filterSelectivities, false);
+        result = j.orderJoins(stats, filterSelectivities, true);
 
         // If you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with
         Assert.assertEquals(result.size(), nodes.size());
 
         // Make sure that "a" is the outermost table in the join
+        System.out.println("last t1Alias: " + result.get(result.size() - 1).t1Alias);
+        System.out.println("last t2Alias: " + result.get(result.size() - 1).t2Alias);
         Assert.assertTrue(result.get(result.size() - 1).t2Alias.equals("a")
                 || result.get(result.size() - 1).t1Alias.equals("a"));
     }

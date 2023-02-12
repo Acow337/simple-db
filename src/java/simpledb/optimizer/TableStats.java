@@ -157,9 +157,10 @@ public class TableStats {
 
         //TODO how to decide the buckets?
         for (int i = 0; i < length; i++) {
+//            System.out.printf("max: %d min: %d num: %d\n", maxArr[i], minArr[i], tupleNum);
             switch (typeArr[i]) {
                 case INT_TYPE:
-                    IntHistogram intHistogram = new IntHistogram(maxArr[i] - minArr[i], minArr[i], maxArr[i]);
+                    IntHistogram intHistogram = new IntHistogram(tupleNum, minArr[i], maxArr[i]);
                     intHistogramMap.put(i, intHistogram);
                     break;
                 case STRING_TYPE:

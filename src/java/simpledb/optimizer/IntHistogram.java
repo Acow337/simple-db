@@ -54,6 +54,10 @@ public class IntHistogram {
         int i = (v - min) / interval;
         if (v == max) i--;
 //        System.out.printf("v:%d , index:%d\n", v, i);
+        if (i >= heights.length) {
+            System.out.printf("v: %d max: %d min: %d interval: %d\n", v, max, min, interval);
+        }
+        if (i >= heights.length) i = heights.length - 1;
         heights[i]++;
         ntups++;
     }

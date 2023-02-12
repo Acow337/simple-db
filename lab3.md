@@ -61,20 +61,20 @@ on these steps are given in Section 2 below.
    statistics of your devising.
 *  Implement the methods in the `JoinOptimizer` class that
    allow it to estimate the cost and selectivities of joins.
-*  Write the `orderJoins` method in `JoinOptimizer`. This method must produce
-   an optimal ordering for a series of joins (likely using the Selinger algorithm),
+*  Write the `orderJoins` method in `JoinOptimizer`. **This method must produce**
+   **an optimal ordering for a series of joins** (likely using the **Selinger algorithm**),
    given statistics computed in the previous two steps.
 
 ##  2. Optimizer outline
 
 Recall that the main idea of a cost-based optimizer is to:
 
-*  Use statistics about tables to estimate "costs" of different
-   query plans. Typically, the cost of a plan is related to the cardinalities of
+*  **Use statistics about tables to estimate "costs" of different**
+   **query plans**. Typically, the cost of a plan is related to the cardinalities of
    (number of tuples produced by) intermediate joins and selections, as well as the
    selectivity of filter and join predicates.
-*  Use these statistics to order joins and selections in an
-   optimal way, and to select the best implementation for join algorithms from
+*  **Use these statistics to order joins and selections in an**
+   **optimal way**, and to select the best implementation for join algorithms from
    amongst several alternatives.
 
 In this lab, you will implement code to perform both of these functions.
@@ -110,7 +110,7 @@ with double-borders. The classes and methods will be explained in more detail
 in the text that follows (you may wish to refer back to this diagram), but the
 basic operation is as follows:
 
-1. `Parser.java` constructs a set of table statistics (stored in the
+1. `Parser.java` **constructs a set of table statistics** (stored in the
    `statsMap` container) when it is initialized. It then waits for a
    query to be input, and calls the method `parseQuery` on that query.
 2. `parseQuery` first constructs a `LogicalPlan` that represents the parsed
@@ -122,12 +122,12 @@ In the exercises to come, you will implement the methods that help
 `physicalPlan` devise an optimal plan.
 
 ### 2.2. Statistics Estimation
-Accurately estimating plan cost is quite tricky. In this lab, we will focus only
-on the cost of sequences of joins and base table accesses. We won't worry about
+Accurately estimating plan cost is quite tricky. In this lab, **we will focus only**
+**on the cost of sequences of joins and base table accesses**. We won't worry about
 access method selection (since we only have one access method, table scans) or
 the costs of additional operators (like aggregates).
 
-You are only required to consider left-deep plans for this lab. See Section 2.3
+You are only required to consider **left-deep plans** for this lab. See Section 2.3
 for a description of additional "bonus" optimizer features you might implement,
 including an approach for handling bushy plans.
 
@@ -175,7 +175,7 @@ Here, `ntups(t1)` is the number of tuples in table t1.
 `ntups` can be directly computed for a base table by scanning that table.
 Estimating `ntups` for a table with one or more selection predicates over it can
 be trickier -- this is the *filter selectivity estimation* problem.  Here's one
-approach that you might use, based on computing a histogram over the values in
+approach that you might use, based on computing a **histogram** over the values in
 the table:
 
 *  Compute the **minimum** **and maximum values** for every attribute in the table (by
@@ -304,8 +304,8 @@ While implementing your simple solution, you  should keep in mind the following:
 * For range scans, it is similarly hard to say anything accurate about sizes.
   The size of the output should be proportional to the sizes of the inputs. It is
   fine to assume that a fixed fraction of the cross-product is emitted by range
-  scans (say, 30%).  In general, the cost of a range join should be larger than
-  the cost of a non-primary key equality join of two tables of the same size.
+  scans (say, 30%).  **In general, the cost of a range join should be larger than**
+  **the cost of a non-primary key equality join of two tables of the same size.**
 
 ----------
 
@@ -333,7 +333,7 @@ After implementing these methods, you should be able to pass the unit tests
 
 ----------
 
-###  2.3 Join Ordering
+###  2.3 Join Ordering	
 
 Now that you have implemented methods for estimating costs, you will implement
 the Selinger optimizer.  For these methods, joins are expressed as a list of
@@ -342,6 +342,7 @@ to join as described in class.
 
 Translating the algorithm given in lecture to the join node list form mentioned
 above, an outline in pseudocode would be:
+
 ```
 1. j = set of join nodes
 2. for (i in 1...|j|):
