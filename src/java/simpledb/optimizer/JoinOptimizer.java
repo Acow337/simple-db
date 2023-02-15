@@ -103,7 +103,8 @@ public class JoinOptimizer {
             // nested-loops join.
 
             //TODO can be optimized
-            return card2 * cost1 + cost2 * card1;
+//            return card2 * cost1 + cost2 * card1;
+            return card1 * card2 + card1 * cost2 + cost1;
         }
     }
 

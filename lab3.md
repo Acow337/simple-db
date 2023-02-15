@@ -181,7 +181,7 @@ the table:
 *  Compute the **minimum** **and maximum values** for every attribute in the table (by
    scanning it once).
 *  Construct a histogram for every attribute in the table. A simple
-   approach is to use **a fixed number of buckets** *NumB*, with each bucket
+   approach is to use **a fixed number of buckets** ***NumB***, with each bucket
    representing the number of records in a fixed range of the domain of the
    attribute of the histogram.  For example, if a field
    *f* ranges from 1 to 100, and there are 10 buckets, then bucket 1 might
@@ -192,7 +192,7 @@ the table:
    histogram.
 *  To estimate the selectivity of an equality expression, *f = const*, compute the
    bucket that contains value *const*. Suppose the width (range of values) of
-   the bucket is *w*, the height (number of tuples) is ***h***, and the number of
+   the bucket is ***w***, the height (number of tuples) is ***h***, and the number of
    tuples in the table is ***ntups***.  Then, assuming values are uniformly
    distributed throughout the bucket, the selectivity of the expression is
    roughly ***(h / w) / ntups***, since *(h/w)* represents the expected number of
