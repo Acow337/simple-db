@@ -294,15 +294,15 @@ for join selectivity estimation.
 While implementing your simple solution, you  should keep in mind the following:
 
 * For equality joins, when one of the attributes is a primary key, the number
-  of tuples produced by the join cannot be larger than the cardinality of the
-  non-primary key attribute.
+  of tuples produced by the join **cannot be larger than the cardinality of the**
+  **non-primary key attribute**.
 * For equality joins when there is no primary key, it's hard to say much about
-  what the size of the output is -- it could be the size of the product of the
-  cardinalities of the tables (if both tables have the same value for all
+  what the size of the output is -- it could be **the size of the product of the**
+  **cardinalities of the tables** (if both tables have the same value for all
   tuples) -- or it could be 0.  It's fine to make up a simple heuristic (say,
   the size of the larger of the two tables).
 * For range scans, it is similarly hard to say anything accurate about sizes.
-  The size of the output should be proportional to the sizes of the inputs. It is
+  The size of the output **should be proportional to the sizes of the inputs**. It is
   fine to assume that a fixed fraction of the cross-product is emitted by range
   scans (say, 30%).  **In general, the cost of a range join should be larger than**
   **the cost of a non-primary key equality join of two tables of the same size.**

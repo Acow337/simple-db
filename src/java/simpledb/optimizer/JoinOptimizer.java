@@ -101,9 +101,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-
             //TODO can be optimized
-//            return card2 * cost1 + cost2 * card1;
             return card1 * card2 + card1 * cost2 + cost1;
         }
     }
@@ -139,13 +137,22 @@ public class JoinOptimizer {
                                                    int card1, int card2, boolean t1pkey,
                                                    boolean t2pkey, Map<String, TableStats> stats,
                                                    Map<String, Integer> tableAliasToId) {
-        int card = 1;
-        if (!t1pkey && !t2pkey) {
-            card = card1 * card2;
-        } else {
-            card = Math.max(card1, card2);
+        int card = -1;
+        card = card1 * card2;
+
+        if (joinOp != Predicate.Op.EQUALS) {
+            return card1 * card2;
         }
 
+        if (!t1pkey && !t2pkey) {
+            card = card1 * card2;
+        } else if (t1pkey && t2pkey) {
+            card = Math.min(card1, card2);
+        } else if (t1pkey) {
+            card = Math.min(card, card2);
+        } else {
+            card = Math.min(card, card1);
+        }
         // TODO: some code goes here
         return card <= 0 ? 1 : card;
     }
@@ -207,6 +214,7 @@ public class JoinOptimizer {
             sets = enumerateSubsets(joins, i + 1);
             for (Set<LogicalJoinNode> s : sets) {
                 bestCost = Double.MAX_VALUE;
+                bestCard = null;
                 flag = false;
                 for (LogicalJoinNode node : s) {
                     CostCard costCard = computeCostAndCardOfSubplan(stats, filterSelectivities, node, s, bestCost, planCache);
