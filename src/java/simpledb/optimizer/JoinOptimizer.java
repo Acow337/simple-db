@@ -129,6 +129,8 @@ public class JoinOptimizer {
         }
     }
 
+    // TODO can be optimized?
+
     /**
      * Estimate the join cardinality of two tables.
      */
@@ -139,7 +141,7 @@ public class JoinOptimizer {
                                                    Map<String, Integer> tableAliasToId) {
         int card = -1;
 
-        if(joinOp == Predicate.Op.EQUALS){
+        if (joinOp == Predicate.Op.EQUALS) {
             if (t1pkey && !t2pkey) {
                 card = card2;
             } else if (!t1pkey && t2pkey) {
