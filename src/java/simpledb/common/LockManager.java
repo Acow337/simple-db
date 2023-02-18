@@ -1,5 +1,7 @@
 package simpledb.common;
 
+import simpledb.storage.Page;
+import simpledb.storage.PageId;
 import simpledb.storage.RecordId;
 import simpledb.storage.Tuple;
 
@@ -12,11 +14,11 @@ public class LockManager {
 
     static private Map<RecordId, ReadWriteLock> tupleRWLockMap = new ConcurrentHashMap<>();
     static private Map<RecordId, ReentrantLock> tupleLockMap = new ConcurrentHashMap<>();
+    static private Map<PageId, ReadWriteLock> pageRWLockMap = new ConcurrentHashMap<>();
     static private Map<Integer, ReentrantLock> tableLockMap = new ConcurrentHashMap<>();
 
     public LockManager() {
     }
-
     static void lockByTuple(RecordId rid) {
         tupleLockMap.get(rid).lock();
     }
@@ -39,6 +41,22 @@ public class LockManager {
 
     static void unWLockByTuple(RecordId rid) {
         tupleRWLockMap.get(rid).writeLock().unlock();
+    }
+
+    static void RLockByPage(PageId pid) {
+        pageRWLockMap.get(pid).readLock().lock();
+    }
+
+    static void unRLockByPage(PageId pid) {
+        pageRWLockMap.get(pid).readLock().unlock();
+    }
+
+    static void WLockByPage(PageId pid) {
+        pageRWLockMap.get(pid).writeLock().lock();
+    }
+
+    static void unWLockByPage(PageId pid) {
+        pageRWLockMap.get(pid).writeLock().unlock();
     }
 
     static void lockByTable(Integer tid) {
