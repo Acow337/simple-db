@@ -21,67 +21,67 @@ public class LockManager {
     public LockManager() {
     }
 
-    static void addLockByTuple(RecordId rid) {
+    static public void addLockByTuple(RecordId rid) {
         tupleLockMap.put(rid, new ReentrantLock());
     }
 
-    static void lockByTuple(RecordId rid) {
+    static public void lockByTuple(RecordId rid) {
         tupleLockMap.get(rid).lock();
     }
 
-    static void unlockByTuple(RecordId rid) {
+    static public void unlockByTuple(RecordId rid) {
         tupleLockMap.get(rid).unlock();
     }
 
-    static void addRWLockByTuple(RecordId rid) {
+    static public void addRWLockByTuple(RecordId rid) {
         tupleRWLockMap.put(rid, new ReentrantReadWriteLock());
     }
 
-    static void RLockByTuple(RecordId rid) {
+    static public void RLockByTuple(RecordId rid) {
         tupleRWLockMap.get(rid).readLock().lock();
     }
 
-    static void unRLockByTuple(RecordId rid) {
+    static public void unRLockByTuple(RecordId rid) {
         tupleRWLockMap.get(rid).readLock().unlock();
     }
 
-    static void WLockByTuple(RecordId rid) {
+    static public void WLockByTuple(RecordId rid) {
         tupleRWLockMap.get(rid).writeLock().lock();
     }
 
-    static void unWLockByTuple(RecordId rid) {
+    static public void unWLockByTuple(RecordId rid) {
         tupleRWLockMap.get(rid).writeLock().unlock();
     }
 
-    static void addRWLockByPage(PageId pid) {
+    static public void addRWLockByPage(PageId pid) {
         pageRWLockMap.put(pid, new ReentrantReadWriteLock());
     }
 
-    static void RLockByPage(PageId pid) {
+    static public void RLockByPage(PageId pid) {
         pageRWLockMap.get(pid).readLock().lock();
     }
 
-    static void unRLockByPage(PageId pid) {
+    static public void unRLockByPage(PageId pid) {
         pageRWLockMap.get(pid).readLock().unlock();
     }
 
-    static void WLockByPage(PageId pid) {
+    static public void WLockByPage(PageId pid) {
         pageRWLockMap.get(pid).writeLock().lock();
     }
 
-    static void unWLockByPage(PageId pid) {
+    static public void unWLockByPage(PageId pid) {
         pageRWLockMap.get(pid).writeLock().unlock();
     }
 
-    static void addLockByTable(Integer tid) {
+    static public void addLockByTable(Integer tid) {
         tableLockMap.put(tid, new ReentrantLock());
     }
 
-    static void lockByTable(Integer tid) {
+    static public void lockByTable(Integer tid) {
         tableLockMap.get(tid).lock();
     }
 
-    static void unlockByTable(Integer tid) {
+    static public void unlockByTable(Integer tid) {
         tableLockMap.get(tid).unlock();
     }
 }
