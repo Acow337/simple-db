@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockManager {
 
@@ -19,12 +20,21 @@ public class LockManager {
 
     public LockManager() {
     }
+
+    static void addLockByTuple(RecordId rid) {
+        tupleLockMap.put(rid, new ReentrantLock());
+    }
+
     static void lockByTuple(RecordId rid) {
         tupleLockMap.get(rid).lock();
     }
 
     static void unlockByTuple(RecordId rid) {
         tupleLockMap.get(rid).unlock();
+    }
+
+    static void addRWLockByTuple(RecordId rid) {
+        tupleRWLockMap.put(rid, new ReentrantReadWriteLock());
     }
 
     static void RLockByTuple(RecordId rid) {
@@ -43,6 +53,10 @@ public class LockManager {
         tupleRWLockMap.get(rid).writeLock().unlock();
     }
 
+    static void addRWLockByPage(PageId pid) {
+        pageRWLockMap.put(pid, new ReentrantReadWriteLock());
+    }
+
     static void RLockByPage(PageId pid) {
         pageRWLockMap.get(pid).readLock().lock();
     }
@@ -57,6 +71,10 @@ public class LockManager {
 
     static void unWLockByPage(PageId pid) {
         pageRWLockMap.get(pid).writeLock().unlock();
+    }
+
+    static void addLockByTable(Integer tid) {
+        tableLockMap.put(tid, new ReentrantLock());
     }
 
     static void lockByTable(Integer tid) {
