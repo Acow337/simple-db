@@ -16,11 +16,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockManager {
 
-//    static private Map<RecordId, ReadWriteLock> tupleRWLockMap = new ConcurrentHashMap<>();
+    //    static private Map<RecordId, ReadWriteLock> tupleRWLockMap = new ConcurrentHashMap<>();
 //    static private Map<RecordId, ReentrantLock> tupleLockMap = new ConcurrentHashMap<>();
     static private Map<PageId, ReadWriteLock> pageRWLockMap = new ConcurrentHashMap<>();
-//    static private Map<Integer, ReentrantLock> tableLockMap = new ConcurrentHashMap<>();
-    static private Map<TransactionId, Set<PageId>> tidPageRWLockMap = new ConcurrentHashMap<>();
+    //    static private Map<Integer, ReentrantLock> tableLockMap = new ConcurrentHashMap<>();
+    static private Map<TransactionId, Set<PageId>> txnTrackMap = new ConcurrentHashMap<>();
 
     public LockManager() {
     }
@@ -57,25 +57,25 @@ public class LockManager {
 //        tupleRWLockMap.get(rid).writeLock().unlock();
 //    }
 
-    static public void addRWLockByPage(PageId pid) {
+    static public void addRWLockByPage(TransactionId tid, PageId pid) {
         if (!pageRWLockMap.containsKey(pid)) {
             pageRWLockMap.put(pid, new ReentrantReadWriteLock());
         }
     }
 
-    static public void RLockByPage(PageId pid) {
+    static public void RLockByPage(TransactionId tid, PageId pid) {
         pageRWLockMap.get(pid).readLock().lock();
     }
 
-    static public void unRLockByPage(PageId pid) {
+    static public void unRLockByPage(TransactionId tid, PageId pid) {
         pageRWLockMap.get(pid).readLock().unlock();
     }
 
-    static public void WLockByPage(PageId pid) {
+    static public void WLockByPage(TransactionId tid, PageId pid) {
         pageRWLockMap.get(pid).writeLock().lock();
     }
 
-    static public void unWLockByPage(PageId pid) {
+    static public void unWLockByPage(TransactionId tid, PageId pid) {
         pageRWLockMap.get(pid).writeLock().unlock();
     }
 

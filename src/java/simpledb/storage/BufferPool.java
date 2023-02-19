@@ -79,13 +79,13 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
-        LockManager.addRWLockByPage(pid);
+        LockManager.addRWLockByPage(tid, pid);
         if (perm == null || perm == Permissions.READ_WRITE) {
             System.out.println("tid: " + tid.toString() + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
-            LockManager.WLockByPage(pid);
+            LockManager.WLockByPage(tid, pid);
         } else if (perm == Permissions.READ_ONLY) {
             System.out.println("tid: " + tid.toString() + "prem: " + perm + " RLockByPage pageId: " + pid.toString());
-            LockManager.RLockByPage(pid);
+            LockManager.RLockByPage(tid, pid);
         }
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
@@ -94,15 +94,15 @@ public class BufferPool {
         return page;
     }
 
-    public Page getPage(PageId pid) {
-        if (LRUCache.containsKey(pid))
-            return LRUCache.get(pid);
-        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-        LockManager.addRWLockByPage(page.getId());
-        LockManager.WLockByPage(page.getId());
-        LRUCache.put(page.getId(), page);
-        return page;
-    }
+//    public Page getPage(PageId pid) {
+//        if (LRUCache.containsKey(pid))
+//            return LRUCache.get(pid);
+//        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+//        LockManager.addRWLockByPage(,page.getId());
+//        LockManager.WLockByPage(page.getId());
+//        LRUCache.put(page.getId(), page);
+//        return page;
+//    }
 
     /**
      * Releases the lock on a page.
@@ -114,8 +114,8 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
-        LockManager.unWLockByPage(pid);
-        LockManager.unRLockByPage(pid);
+        LockManager.unWLockByPage(tid, pid);
+        LockManager.unRLockByPage(tid, pid);
     }
 
     /**
@@ -132,8 +132,8 @@ public class BufferPool {
      * Return true if the specified transaction has a lock on the specified page
      */
     public boolean holdsLock(TransactionId tid, PageId p) {
-        LockManager.addRWLockByPage(p);
-        LockManager.WLockByPage(p);
+        LockManager.addRWLockByPage(tid, p);
+        LockManager.WLockByPage(tid, p);
         return true;
     }
 
