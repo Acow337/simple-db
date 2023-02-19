@@ -79,6 +79,14 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
+        LockManager.addRWLockByPage(pid);
+        if (perm == null || perm == Permissions.READ_WRITE) {
+            System.out.println("tid: " + tid.toString() + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
+            LockManager.WLockByPage(pid);
+        } else if (perm == Permissions.READ_ONLY) {
+            System.out.println("tid: " + tid.toString() + "prem: " + perm + " RLockByPage pageId: " + pid.toString());
+            LockManager.RLockByPage(pid);
+        }
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
@@ -90,6 +98,8 @@ public class BufferPool {
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+        LockManager.addRWLockByPage(page.getId());
+        LockManager.WLockByPage(page.getId());
         LRUCache.put(page.getId(), page);
         return page;
     }
@@ -104,8 +114,8 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
-        // TODO: some code goes here
-        // not necessary for lab1|lab2
+        LockManager.unWLockByPage(pid);
+        LockManager.unRLockByPage(pid);
     }
 
     /**
@@ -122,9 +132,9 @@ public class BufferPool {
      * Return true if the specified transaction has a lock on the specified page
      */
     public boolean holdsLock(TransactionId tid, PageId p) {
-        // TODO: some code goes here
-        // not necessary for lab1|lab2
-        return false;
+        LockManager.addRWLockByPage(p);
+        LockManager.WLockByPage(p);
+        return true;
     }
 
     /**
