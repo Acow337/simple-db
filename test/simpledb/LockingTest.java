@@ -178,8 +178,10 @@ public class LockingTest extends TestUtil.CreateHeapFile {
      */
     @Test
     public void lockUpgrade() throws Exception {
+        System.out.println("tid1: " + tid1);
         metaLockTester(tid1, p0, Permissions.READ_ONLY,
                 tid1, p0, Permissions.READ_WRITE, true);
+        System.out.println("tid2: " + tid2);
         metaLockTester(tid2, p1, Permissions.READ_ONLY,
                 tid2, p1, Permissions.READ_WRITE, true);
     }

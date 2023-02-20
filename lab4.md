@@ -87,6 +87,7 @@ As we discussed in class, this means that:
 *  On transaction commit, you should force dirty pages to disk (e.g.,
    write the pages out) (this is FORCE).
    
+
 To further simplify your life, you may assume that SimpleDB will not crash while
 processing a `transactionComplete` command.  Note that these three points mean
 that you do not need to implement log-based recovery in this lab, since you will

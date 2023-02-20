@@ -9,6 +9,7 @@ import simpledb.transaction.TransactionId;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -114,6 +115,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
+        System.out.println("unsafeReleasePage tid: " + tid);
         LockManager.unWLockByPage(tid, pid);
         LockManager.unRLockByPage(tid, pid);
     }
@@ -124,6 +126,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) {
+        System.out.println("transactionComplete " + "tid: " + tid.toString());
         // TODO: some code goes here
         // not necessary for lab1|lab2
     }
@@ -145,6 +148,7 @@ public class BufferPool {
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit) {
+        System.out.println("transactionComplete " + "tid: " + tid.toString());
         // TODO: some code goes here
         // not necessary for lab1|lab2
     }
@@ -215,6 +219,9 @@ public class BufferPool {
         while (it.hasNext()) {
             Page p = it.next();
             if (p.isDirty() != null) {
+                TransactionId tid = p.isDirty();
+                System.out.println("===flush=== tid: " + tid.toString() + " pageId: " + p.getId());
+                LockManager.unRWLockByPage(tid, p.getId());
                 Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
                 it.remove();
             }
