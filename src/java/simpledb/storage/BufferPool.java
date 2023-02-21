@@ -80,13 +80,10 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
-        LockManager.addRWLockByPage(tid, pid);
         if (perm == null || perm == Permissions.READ_WRITE) {
             System.out.println("tid: " + tid.toString() + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
-            LockManager.WLockByPage(tid, pid);
         } else if (perm == Permissions.READ_ONLY) {
             System.out.println("tid: " + tid.toString() + "prem: " + perm + " RLockByPage pageId: " + pid.toString());
-            LockManager.RLockByPage(tid, pid);
         }
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
@@ -116,8 +113,6 @@ public class BufferPool {
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
         System.out.println("unsafeReleasePage tid: " + tid);
-        LockManager.unWLockByPage(tid, pid);
-        LockManager.unRLockByPage(tid, pid);
     }
 
     /**
@@ -135,8 +130,6 @@ public class BufferPool {
      * Return true if the specified transaction has a lock on the specified page
      */
     public boolean holdsLock(TransactionId tid, PageId p) {
-        LockManager.addRWLockByPage(tid, p);
-        LockManager.WLockByPage(tid, p);
         return true;
     }
 
@@ -221,7 +214,6 @@ public class BufferPool {
             if (p.isDirty() != null) {
                 TransactionId tid = p.isDirty();
                 System.out.println("===flush=== tid: " + tid.toString() + " pageId: " + p.getId());
-                LockManager.unRWLockByPage(tid, p.getId());
                 Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
                 it.remove();
             }
