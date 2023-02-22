@@ -63,6 +63,7 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
   @Test public void attemptTransactionTwice() throws Exception {
     bp.getPage(tid1, p0, Permissions.READ_ONLY);
     bp.getPage(tid1, p1, Permissions.READ_WRITE);
+    System.out.println("transactionComplete");
     bp.transactionComplete(tid1, true);
 
     bp.getPage(tid2, p0, Permissions.READ_WRITE);

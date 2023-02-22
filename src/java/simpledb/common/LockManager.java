@@ -3,9 +3,7 @@ package simpledb.common;
 import simpledb.storage.PageId;
 import simpledb.transaction.TransactionId;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -53,6 +51,7 @@ public class LockManager {
 
     private Map<PageId, LockRequestQueue> pageLockMap;
     private Map<Integer, List<Integer>> waitsForMap;
+    private Map<TransactionId, Set<PageId>> txnMarkMap;
     private Thread cycleDetectionThread;
     private volatile boolean enableCycleDetection;
 
@@ -60,6 +59,7 @@ public class LockManager {
         enableCycleDetection = true;
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
+        txnMarkMap = new ConcurrentHashMap<>();
         //TODO
         cycleDetectionThread = new Thread();
     }
@@ -68,6 +68,8 @@ public class LockManager {
     public void lockPage(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException {
         System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString());
         if (!pageLockMap.containsKey(pageId)) pageLockMap.put(pageId, new LockRequestQueue());
+        if (!txnMarkMap.containsKey(tid)) txnMarkMap.put(tid, new HashSet<>());
+        txnMarkMap.get(tid).add(pageId);
         LockMode mode = null;
         LockMode formerMode = null;
         LockRequest formerRequest = null;
@@ -167,6 +169,14 @@ public class LockManager {
         requestQueue.latch.lock();
         requestQueue.condition.signalAll();
         requestQueue.latch.unlock();
+    }
+
+    public Set<PageId> getMarkPages(TransactionId tid) {
+        return txnMarkMap.get(tid);
+    }
+
+    public void removeTxnMark(TransactionId tid) {
+        txnMarkMap.remove(tid);
     }
 
 }

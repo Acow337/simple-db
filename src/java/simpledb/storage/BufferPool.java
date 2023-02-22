@@ -109,6 +109,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
+        LRUCache.remove(pid);
         Database.getLockManager().unLockPage(tid, pid);
     }
 
@@ -119,8 +120,16 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid) {
         System.out.println("transactionComplete " + "tid: " + tid.toString());
-        // TODO: some code goes here
-        // not necessary for lab1|lab2
+        Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
+        for (PageId pid : markPages) {
+            unsafeReleasePage(tid, pid);
+            try {
+                flushPage(pid);
+            } catch (IOException e) {
+                System.out.println("warning, IOException");
+            }
+        }
+        Database.getLockManager().removeTxnMark(tid);
     }
 
     /**
@@ -133,14 +142,21 @@ public class BufferPool {
     /**
      * Commit or abort a given transaction; release all locks associated to
      * the transaction.
+     * <p>
+     * When you commit, you should flush dirty pages associated to the transaction to
+     * disk. When you abort, you should revert any changes made by the transaction by
+     * restoring the page to its on-disk state.
      *
      * @param tid    the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit) {
         System.out.println("transactionComplete " + "tid: " + tid.toString());
-        // TODO: some code goes here
-        // not necessary for lab1|lab2
+        if (commit) {
+            transactionComplete(tid);
+        } else {
+            //TODO abort
+        }
     }
 
     /**
@@ -247,8 +263,10 @@ public class BufferPool {
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-        // TODO: some code goes here
-        // not necessary for lab1|lab2
+        Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
+        for (PageId pid : markPages) {
+            flushPage(pid);
+        }
     }
 
     /**
