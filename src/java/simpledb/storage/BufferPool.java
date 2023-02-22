@@ -76,7 +76,7 @@ public class BufferPool {
      * @param pid  the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException, IOException {
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
@@ -90,7 +90,8 @@ public class BufferPool {
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-        LRUCache.put(page.getId(), page);
+        Page remove = LRUCache.put(page.getId(), page);
+        if (remove != null) flushPage(remove.getId());
         return page;
     }
 
@@ -249,12 +250,12 @@ public class BufferPool {
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
+     *
+     * Do not need, because getPage() already can evict page when cathe is oversize
+     *
      */
-    //TODO use LRU
-    private synchronized void evictPage() throws DbException, IOException {
-        Page page = LRUCache.removeTail().value;
-        flushPage(page.getId());
-    }
+//    private synchronized void evictPage() throws DbException, IOException {
+//    }
 
 }
 

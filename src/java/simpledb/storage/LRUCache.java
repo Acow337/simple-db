@@ -64,7 +64,7 @@ public class LRUCache<K, T> {
         return node.value;
     }
 
-    public void put(K key, T value) {
+    public T put(K key, T value) {
         DLinkedNode node = cache.get(key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
@@ -73,13 +73,15 @@ public class LRUCache<K, T> {
             ++size;
             if (size > capacity) {
                 DLinkedNode tail = removeTail();
-                cache.remove(tail.key);
+                DLinkedNode remove = cache.remove(tail.key);
                 --size;
+                return remove.value;
             }
         } else {
             node.value = value;
             moveToHead(node);
         }
+        return null;
     }
 
     private void addToHead(DLinkedNode node) {

@@ -151,7 +151,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public List<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException {
+    public List<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException, TransactionAbortedException, IOException {
         List<Page> dirtyPages = new ArrayList<>();
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
         page.deleteTuple(t);
@@ -182,13 +182,13 @@ public class HeapFile implements DbFile {
             isOpen = false;
         }
 
-        public void open() throws DbException, TransactionAbortedException {
+        public void open() throws DbException, TransactionAbortedException, IOException {
             curPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(heapFile.id, pageCur), Permissions.READ_ONLY);
             curIterator = curPage.iterator();
             isOpen = true;
         }
 
-        public boolean hasNext() throws DbException, TransactionAbortedException {
+        public boolean hasNext() throws DbException, TransactionAbortedException, IOException {
             if (!isOpen || pageCur >= pageNum) return false;
             if (curIterator.hasNext()) return true;
             pageCur++;
@@ -199,7 +199,7 @@ public class HeapFile implements DbFile {
             return true;
         }
 
-        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
             if (!isOpen) throw new NoSuchElementException();
             if (!curIterator.hasNext()) {
                 pageCur++;
@@ -210,7 +210,7 @@ public class HeapFile implements DbFile {
             return curIterator.next();
         }
 
-        public void rewind() throws DbException, TransactionAbortedException {
+        public void rewind() throws DbException, TransactionAbortedException, IOException {
             pageCur = 0;
             curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), Permissions.READ_ONLY);
             curIterator = curPage.iterator();

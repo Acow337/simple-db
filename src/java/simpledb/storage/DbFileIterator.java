@@ -3,6 +3,7 @@ package simpledb.storage;
 import simpledb.common.DbException;
 import simpledb.transaction.TransactionAbortedException;
 
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
 /**
@@ -16,13 +17,13 @@ public interface DbFileIterator {
      * @throws DbException when there are problems opening/accessing the database.
      */
     void open()
-            throws DbException, TransactionAbortedException;
+            throws DbException, TransactionAbortedException, IOException;
 
     /**
      * @return true if there are more tuples available, false if no more tuples or iterator isn't open.
      */
     boolean hasNext()
-            throws DbException, TransactionAbortedException;
+            throws DbException, TransactionAbortedException, IOException;
 
     /**
      * Gets the next tuple from the operator (typically implementing by reading
@@ -32,14 +33,14 @@ public interface DbFileIterator {
      * @throws NoSuchElementException if there are no more tuples
      */
     Tuple next()
-            throws DbException, TransactionAbortedException, NoSuchElementException;
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException;
 
     /**
      * Resets the iterator to the start.
      *
      * @throws DbException When rewind is unsupported.
      */
-    void rewind() throws DbException, TransactionAbortedException;
+    void rewind() throws DbException, TransactionAbortedException, IOException;
 
     /**
      * Closes the iterator.
