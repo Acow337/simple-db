@@ -123,25 +123,33 @@ public class LockManager {
                     requestQueue.offer(newRequest);
                     return;
                 } else {
+                    requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
+                    requestQueue.latch.unlock();
                     lockPage(tid, perm, pageId);
                 }
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
+                    requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
+                    requestQueue.latch.unlock();
                     lockPage(tid, perm, pageId);
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
                         return;
                     } else if (mode == LockMode.EXCLUSIVE) {
+                        requestQueue.latch.lock();
                         requestQueue.condition.awaitUninterruptibly();
+                        requestQueue.latch.unlock();
                         lockPage(tid, perm, pageId);
                     }
                 }
             }
         }
+
+        requestQueue.latch.unlock();
     }
 
     public void unLockPage(TransactionId tid, PageId pageId) {
