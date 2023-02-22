@@ -76,7 +76,7 @@ public class BufferPool {
      * @param pid  the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException, IOException {
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
@@ -91,7 +91,11 @@ public class BufferPool {
             return LRUCache.get(pid);
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         Page remove = LRUCache.put(page.getId(), page);
-        if (remove != null) flushPage(remove.getId());
+        try {
+            if (remove != null && remove.isDirty() != null) flushPage(remove.getId());
+        } catch (IOException e) {
+            throw new DbException("IO Exception");
+        }
         return page;
     }
 
