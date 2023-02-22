@@ -251,8 +251,9 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     //TODO use LRU
-    private synchronized void evictPage() throws DbException {
-        pages.remove(0);
+    private synchronized void evictPage() throws DbException, IOException {
+        Page page = LRUCache.removeTail().value;
+        flushPage(page.getId());
     }
 
 }

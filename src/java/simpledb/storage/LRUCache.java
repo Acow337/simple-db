@@ -99,7 +99,7 @@ public class LRUCache<K, T> {
         addToHead(node);
     }
 
-    private DLinkedNode removeTail() {
+    public DLinkedNode removeTail() {
         DLinkedNode res = tail.prev;
         removeNode(res);
         return res;
