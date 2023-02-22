@@ -62,6 +62,7 @@ public class LockManager {
         enableCycleDetection = true;
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
+        //TODO
         cycleDetectionThread = new Thread();
     }
 

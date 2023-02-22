@@ -21,13 +21,14 @@ public class Database {
     private static final AtomicReference<Database> _instance = new AtomicReference<>(new Database());
     private final Catalog _catalog;
     private final BufferPool _bufferpool;
-
     private final static String LOGFILENAME = "log";
     private final LogFile _logfile;
+    private final LockManager _lockmanager;
 
     private Database() {
         _catalog = new Catalog();
         _bufferpool = new BufferPool(BufferPool.DEFAULT_PAGES);
+        _lockmanager = new LockManager();
         LogFile tmp = null;
         try {
             tmp = new LogFile(new File(LOGFILENAME));
