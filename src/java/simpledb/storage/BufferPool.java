@@ -6,7 +6,6 @@ import simpledb.transaction.TransactionId;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -132,6 +131,25 @@ public class BufferPool {
         Database.getLockManager().removeTxnMark(tid);
     }
 
+//    public void transactionReverse(TransactionId tid) {
+//        System.out.println("transactionReverse " + "tid: " + tid.toString());
+//        Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
+//        for (PageId pid : markPages) {
+//            unsafeReleasePage(tid, pid);
+//            try {
+//                if (LRUCache.containsKey(pid)) {
+//                    LRUCache.remove(pid);
+//                } else {
+//
+//                }
+//                flushPage(pid);
+//            } catch (IOException e) {
+//                System.out.println("warning, IOException");
+//            }
+//        }
+//        Database.getLockManager().removeTxnMark(tid);
+//    }
+
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
@@ -144,7 +162,9 @@ public class BufferPool {
      * the transaction.
      * <p>
      * When you commit, you should flush dirty pages associated to the transaction to
-     * disk. When you abort, you should revert any changes made by the transaction by
+     * disk.
+     * <p>
+     * When you abort, you should revert any changes made by the transaction by
      * restoring the page to its on-disk state.
      *
      * @param tid    the ID of the transaction requesting the unlock
@@ -155,7 +175,12 @@ public class BufferPool {
         if (commit) {
             transactionComplete(tid);
         } else {
-            //TODO abort
+            // release all pages in regard to the txn
+            // TODO should use better solution?
+            Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
+            for (PageId pid : markPages) {
+                unsafeReleasePage(tid, pid);
+            }
         }
     }
 
@@ -268,6 +293,7 @@ public class BufferPool {
             flushPage(pid);
         }
     }
+
 
     /**
      * Discards a page from the buffer pool.
