@@ -1,9 +1,6 @@
 package simpledb.storage;
 
-import simpledb.common.Database;
-import simpledb.common.DbException;
-import simpledb.common.LockManager;
-import simpledb.common.Permissions;
+import simpledb.common.*;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
@@ -80,10 +77,15 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
+        try {
+            Database.getLockManager().lockPage(tid, pid, perm);
+        } catch (DeadlockException e) {
+            System.out.println("deadlock happen");
+        }
         if (perm == null || perm == Permissions.READ_WRITE) {
-            System.out.println("tid: " + tid.toString() + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
+            System.out.println("tid: " + tid + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
         } else if (perm == Permissions.READ_ONLY) {
-            System.out.println("tid: " + tid.toString() + "prem: " + perm + " RLockByPage pageId: " + pid.toString());
+            System.out.println("tid: " + tid + " prem: " + perm + " RLockByPage pageId: " + pid.toString());
         }
         if (LRUCache.containsKey(pid))
             return LRUCache.get(pid);
@@ -91,16 +93,6 @@ public class BufferPool {
         LRUCache.put(page.getId(), page);
         return page;
     }
-
-//    public Page getPage(PageId pid) {
-//        if (LRUCache.containsKey(pid))
-//            return LRUCache.get(pid);
-//        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-//        LockManager.addRWLockByPage(,page.getId());
-//        LockManager.WLockByPage(page.getId());
-//        LRUCache.put(page.getId(), page);
-//        return page;
-//    }
 
     /**
      * Releases the lock on a page.
@@ -112,7 +104,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
-        System.out.println("unsafeReleasePage tid: " + tid);
+        Database.getLockManager().unLockPage(tid, pid);
     }
 
     /**
@@ -215,6 +207,8 @@ public class BufferPool {
                 TransactionId tid = p.isDirty();
                 System.out.println("===flush=== tid: " + tid.toString() + " pageId: " + p.getId());
                 Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
+                // release the page
+                unsafeReleasePage(tid, p.getId());
                 it.remove();
             }
         }

@@ -5,10 +5,8 @@ import simpledb.transaction.TransactionId;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.SynchronousQueue;
+import java.util.Queue;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,14 +30,14 @@ public class LockManager {
     }
 
     class LockRequestQueue {
-        public BlockingQueue<LockRequest> queue;
+        public Queue<LockRequest> queue;
         // coordination
         public Lock latch;
         public Condition condition;
         public TransactionId upgradingTid;
 
         public LockRequestQueue() {
-            queue = new SynchronousQueue<>();
+            queue = new ConcurrentLinkedQueue<>();
             latch = new ReentrantLock();
             condition = latch.newCondition();
         }
@@ -66,7 +64,9 @@ public class LockManager {
         cycleDetectionThread = new Thread();
     }
 
-    public void lockPage(TransactionId tid, Permissions perm, PageId pageId) throws DeadlockException {
+
+    public void lockPage(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException {
+        System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString());
         if (!pageLockMap.containsKey(pageId)) pageLockMap.put(pageId, new LockRequestQueue());
         LockMode mode = null;
         LockMode formerMode = null;
@@ -85,6 +85,8 @@ public class LockManager {
         // if no lock on the page, lock literally
         if (requestQueue.queue.isEmpty()) {
             newRequest.granted = true;
+            System.out.println("pageId: " + pageId + " queue size: " + requestQueue.queue.size());
+            System.out.println(tid + " requestQueue is empty, get directly");
             requestQueue.offer(newRequest);
             return;
         }
@@ -127,15 +129,16 @@ public class LockManager {
                     requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
                     requestQueue.latch.unlock();
-                    lockPage(tid, perm, pageId);
+                    lockPage(tid, pageId, perm);
                 }
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
+                    System.out.println(tid + " the other lock is exclusive, wait some time");
                     requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
                     requestQueue.latch.unlock();
-                    lockPage(tid, perm, pageId);
+                    lockPage(tid, pageId, perm);
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
@@ -144,16 +147,15 @@ public class LockManager {
                         requestQueue.latch.lock();
                         requestQueue.condition.awaitUninterruptibly();
                         requestQueue.latch.unlock();
-                        lockPage(tid, perm, pageId);
+                        lockPage(tid, pageId, perm);
                     }
                 }
             }
         }
-
-        requestQueue.latch.unlock();
     }
 
     public void unLockPage(TransactionId tid, PageId pageId) {
+        System.out.println("unLockPage tid: " + tid + " pageId: " + pageId);
         LockRequestQueue requestQueue = pageLockMap.get(pageId);
         LockRequest removeRequest = null;
         for (LockRequest request : requestQueue.queue) {
@@ -162,7 +164,9 @@ public class LockManager {
             }
         }
         requestQueue.queue.remove(removeRequest);
+        requestQueue.latch.lock();
         requestQueue.condition.signalAll();
+        requestQueue.latch.unlock();
     }
 
 }

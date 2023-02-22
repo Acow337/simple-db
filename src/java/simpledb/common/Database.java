@@ -61,6 +61,10 @@ public class Database {
         return _instance.get()._catalog;
     }
 
+    public static LockManager getLockManager() {
+        return _instance.get()._lockmanager;
+    }
+
     /**
      * Method used for testing -- create a new instance of the buffer pool and
      * return it
