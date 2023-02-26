@@ -188,18 +188,20 @@ public class HeapFile implements DbFile {
             isOpen = true;
         }
 
+        // fetch not from BufferPool ?
         public boolean hasNext() throws DbException, TransactionAbortedException {
             if (!isOpen || pageCur >= pageNum) return false;
             if (curIterator.hasNext()) return true;
             pageCur++;
             if (pageCur >= pageNum) return false;
-            curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), Permissions.READ_ONLY);
+//            curPage = (HeapPage) Database.getCatalog().getDatabaseFile(id).readPage(new HeapPageId(heapFile.id, pageCur));
+            curPage = (HeapPage) Database.getBufferPool().getPage(new HeapPageId(heapFile.id, pageCur));
             if (curPage.isEmpty()) return hasNext();
             curIterator = curPage.iterator();
             return true;
         }
 
-        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException{
+        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
             if (!isOpen) throw new NoSuchElementException();
             if (!curIterator.hasNext()) {
                 pageCur++;

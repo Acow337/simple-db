@@ -37,6 +37,9 @@ public class LRUCache<K, T> {
     }
 
     public void remove(K key) {
+        if (!cache.containsKey(key)) {
+            return;
+        }
         DLinkedNode node = cache.get(key);
         removeNode(node);
         size--;
