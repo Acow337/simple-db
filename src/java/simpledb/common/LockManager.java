@@ -51,9 +51,8 @@ public class LockManager {
     }
 
     private Map<PageId, LockRequestQueue> pageLockMap;
-    private Map<Integer, List<Integer>> waitsForMap;
+    private Map<Long, List<Long>> waitsForMap;
     private Map<TransactionId, Set<PageId>> txnMarkMap;
-    private Map<TransactionId, Set<Page>> txnPageMap;
     private Thread cycleDetectionThread;
     private volatile boolean enableCycleDetection;
 
@@ -62,7 +61,6 @@ public class LockManager {
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
         txnMarkMap = new ConcurrentHashMap<>();
-        txnPageMap = new ConcurrentHashMap<>();
         //TODO
         cycleDetectionThread = new Thread();
     }
@@ -106,7 +104,7 @@ public class LockManager {
             }
         }
 
-        //TODO if the txn already has lock on the page
+        // if the txn already has lock on the page
         if (formerRequest != null) {
             // the txn already has lock
             if (formerMode == LockMode.SHARED) {
@@ -131,6 +129,9 @@ public class LockManager {
                     requestQueue.offer(newRequest);
                     return;
                 } else {
+                    for (LockRequest request : requestQueue.queue) {
+                        putWaitForMap(tid.getId(), request.tid.getId());
+                    }
                     requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
                     requestQueue.latch.unlock();
@@ -140,6 +141,7 @@ public class LockManager {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
                     System.out.println(tid + " the other lock is exclusive, wait some time");
+                    putWaitForMap(tid.getId(), other.tid.getId());
                     requestQueue.latch.lock();
                     requestQueue.condition.awaitUninterruptibly();
                     requestQueue.latch.unlock();
@@ -149,6 +151,7 @@ public class LockManager {
                         requestQueue.offer(newRequest);
                         return;
                     } else if (mode == LockMode.EXCLUSIVE) {
+                        putWaitForMap(tid.getId(), other.tid.getId());
                         requestQueue.latch.lock();
                         requestQueue.condition.awaitUninterruptibly();
                         requestQueue.latch.unlock();
@@ -182,15 +185,31 @@ public class LockManager {
         txnMarkMap.remove(tid);
     }
 
-    public void putTxnPageMap(TransactionId tid, Page page) {
-        if (!txnPageMap.containsKey(tid)) txnPageMap.put(tid, new HashSet<>());
-        if (!txnMarkMap.get(tid).contains(page.getId())) {
-            txnPageMap.get(tid).add(page);
-        }
+    public void putWaitForMap(Long k, Long v) throws DeadlockException {
+        if (!waitsForMap.containsKey(k)) waitsForMap.put(k, new LinkedList<>());
+        waitsForMap.get(k).add(v);
+        if (isCycle(k))
+            throw new DeadlockException();
     }
 
-    public Set<Page> getPageSet(TransactionId tid) {
-        return txnPageMap.get(tid);
+    public boolean isCycle(Long start) {
+        Deque<Long> queue = new LinkedList<>();
+        List<Long> list = waitsForMap.get(start);
+        for (Long i : list) {
+            queue.offer(i);
+        }
+        while (!queue.isEmpty()) {
+            Long i = queue.poll();
+            if (i == start) return true;
+            List<Long> l = waitsForMap.get(i);
+            if (l != null) {
+                for (Long item : l) {
+                    queue.offer(item);
+                }
+            }
+        }
+        return false;
     }
+
 
 }

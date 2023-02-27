@@ -82,7 +82,7 @@ public class BufferPool {
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
-            System.out.println("deadlock happen");
+            throw new TransactionAbortedException();
         }
         if (perm == null || perm == Permissions.READ_WRITE) {
             System.out.println("tid: " + tid + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
