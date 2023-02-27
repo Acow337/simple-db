@@ -1,24 +1,26 @@
 package simpledb.storage;
 
+import simpledb.common.DbException;
+
 import java.util.*;
 
 public class LRUCache<K, T> {
     class DLinkedNode {
-        K key;
-        T value;
+        PageId key;
+        Page value;
         DLinkedNode prev;
         DLinkedNode next;
 
         public DLinkedNode() {
         }
 
-        public DLinkedNode(K _key, T _value) {
+        public DLinkedNode(PageId _key, Page _value) {
             key = _key;
             value = _value;
         }
     }
 
-    private Map<K, DLinkedNode> cache = new HashMap<K, DLinkedNode>();
+    private Map<PageId, DLinkedNode> cache = new HashMap<>();
     private int size;
     private int capacity;
     private DLinkedNode head, tail;
@@ -32,11 +34,11 @@ public class LRUCache<K, T> {
         tail.prev = head;
     }
 
-    public boolean containsKey(K key) {
+    public boolean containsKey(PageId key) {
         return cache.containsKey(key);
     }
 
-    public void remove(K key) {
+    public void remove(PageId key) {
         if (!cache.containsKey(key)) {
             return;
         }
@@ -45,8 +47,8 @@ public class LRUCache<K, T> {
         size--;
     }
 
-    public Iterator<T> valueIterator() {
-        List<T> list = new ArrayList<>(size);
+    public Iterator<Page> valueIterator() {
+        List<Page> list = new ArrayList<>(size);
         for (DLinkedNode node : cache.values()) {
             list.add(node.value);
         }
@@ -58,7 +60,7 @@ public class LRUCache<K, T> {
         size = 0;
     }
 
-    public T get(K key) {
+    public Page get(PageId key) {
         DLinkedNode node = cache.get(key);
         if (node == null) {
             return null;
@@ -67,7 +69,7 @@ public class LRUCache<K, T> {
         return node.value;
     }
 
-    public T put(K key, T value) {
+    public Page put(PageId key, Page value) {
         DLinkedNode node = cache.get(key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
@@ -106,6 +108,10 @@ public class LRUCache<K, T> {
 
     public DLinkedNode removeTail() {
         DLinkedNode res = tail.prev;
+        while (res.value != null && res.value.isDirty() != null) {
+            if (res.value == null) throw new RuntimeException("LRU error");
+            res = res.prev;
+        }
         removeNode(res);
         return res;
     }
