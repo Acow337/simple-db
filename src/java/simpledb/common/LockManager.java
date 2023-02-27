@@ -1,5 +1,6 @@
 package simpledb.common;
 
+import simpledb.storage.Page;
 import simpledb.storage.PageId;
 import simpledb.transaction.TransactionId;
 
@@ -52,6 +53,7 @@ public class LockManager {
     private Map<PageId, LockRequestQueue> pageLockMap;
     private Map<Integer, List<Integer>> waitsForMap;
     private Map<TransactionId, Set<PageId>> txnMarkMap;
+    private Map<TransactionId, Set<Page>> txnPageMap;
     private Thread cycleDetectionThread;
     private volatile boolean enableCycleDetection;
 
@@ -60,6 +62,7 @@ public class LockManager {
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
         txnMarkMap = new ConcurrentHashMap<>();
+        txnPageMap = new ConcurrentHashMap<>();
         //TODO
         cycleDetectionThread = new Thread();
     }
@@ -177,6 +180,17 @@ public class LockManager {
 
     public void removeTxnMark(TransactionId tid) {
         txnMarkMap.remove(tid);
+    }
+
+    public void putTxnPageMap(TransactionId tid, Page page) {
+        if (!txnPageMap.containsKey(tid)) txnPageMap.put(tid, new HashSet<>());
+        if (!txnMarkMap.get(tid).contains(page.getId())) {
+            txnPageMap.get(tid).add(page);
+        }
+    }
+
+    public Set<Page> getPageSet(TransactionId tid) {
+        return txnPageMap.get(tid);
     }
 
 }

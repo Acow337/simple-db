@@ -296,8 +296,8 @@ You will need to detect this situation and throw a
 There are many possible ways to detect deadlock. A strawperson example would be
 to implement a simple timeout policy that aborts a transaction if it has not
 completed after a given period of time. For a real solution, you may implement
-cycle-detection in a dependency graph data structure as shown in lecture. In
-this scheme, you would  check for cycles in a dependency graph periodically or
+**cycle-detection** in a dependency graph data structure as shown in lecture. In
+this scheme, you would check for cycles in a dependency graph periodically or
 whenever you attempt to grant a new lock, and abort something if a cycle exists.
 After you have detected that a deadlock exists, you must decide how to improve
 the situation. Assume you have detected a deadlock while  transaction *t* is

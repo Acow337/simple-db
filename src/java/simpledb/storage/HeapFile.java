@@ -206,7 +206,8 @@ public class HeapFile implements DbFile {
             if (!curIterator.hasNext()) {
                 pageCur++;
                 if (pageCur >= pageNum) throw new NoSuchElementException();
-                curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), Permissions.READ_ONLY);
+                curPage = (HeapPage) Database.getBufferPool().getPage(new HeapPageId(heapFile.id, pageCur));
+//                curPage = (HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(heapFile.id, pageCur), Permissions.READ_ONLY);
                 curIterator = curPage.iterator();
             }
             return curIterator.next();
