@@ -144,7 +144,6 @@ public class BufferPool {
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
         System.out.println("BufferPool: unsafeReleasePage " + pid);
-        LRUCache.remove(pid);
         Database.getLockManager().unLockPage(tid, pid);
     }
 
@@ -227,6 +226,7 @@ public class BufferPool {
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         for (PageId pid : markPages) {
             unsafeReleasePage(tid, pid);
+            LRUCache.remove(pid);
         }
         Database.getLockManager().removeTxnMark(tid);
     }
