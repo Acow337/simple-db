@@ -42,6 +42,7 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
+        System.out.println("BufferPool: bufferpool construct, capacity: " + numPages);
         pages = new ArrayList<>(numPages);
         LRUCache = new LRUCache<>(numPages);
     }
@@ -76,6 +77,8 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
+        // try to get the lock
+        System.out.println("BufferPool get page: " + pid);
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
@@ -86,13 +89,23 @@ public class BufferPool {
         } else if (perm == Permissions.READ_ONLY) {
             System.out.println("tid: " + tid + " prem: " + perm + " RLockByPage pageId: " + pid.toString());
         }
-        if (LRUCache.containsKey(pid))
-            return LRUCache.get(pid);
-        Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-        // add Page to Map
-        Database.getLockManager().putTxnPageMap(tid, page);
 
-        Page remove = LRUCache.put(page.getId(), page);
+        // get the page by catch or disk
+        Page page = LRUCache.get(pid);
+        // the removed page
+        Page remove = null;
+        if (page == null) {
+            page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+            // add the Page to Map
+            remove = LRUCache.put(page.getId(), page);
+        }
+
+        // mark the page if it is dirty by the perm
+        if (perm == Permissions.READ_WRITE) {
+            page.markDirty(true, tid);
+        }
+
+        // flush the removed page to disk
         try {
             if (remove != null && remove.isDirty() != null) flushPage(remove);
         } catch (IOException e) {
@@ -103,10 +116,15 @@ public class BufferPool {
 
     // internal use, no lock
     public Page getPage(PageId pid) throws DbException {
-        if (LRUCache.containsKey(pid))
+        System.out.println("BufferPool get page: " + pid);
+        if (LRUCache.containsKey(pid)) {
+            System.out.println("BufferPool: " + "get from catch, catchSize: " + LRUCache.getSize());
             return LRUCache.get(pid);
+        }
+        System.out.println("BufferPool: " + "fail to get from catch");
         Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         Page remove = LRUCache.put(page.getId(), page);
+
         try {
             if (remove != null && remove.isDirty() != null) flushPage(remove);
         } catch (IOException e) {
@@ -125,6 +143,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
+        System.out.println("BufferPool: unsafeReleasePage " + pid);
         LRUCache.remove(pid);
         Database.getLockManager().unLockPage(tid, pid);
     }
@@ -204,18 +223,10 @@ public class BufferPool {
 
 
     public void transactionAbort(TransactionId tid) {
+        System.out.println("Transaction: abort begin");
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         for (PageId pid : markPages) {
             unsafeReleasePage(tid, pid);
-        }
-
-        Set<Page> pageSet = Database.getLockManager().getPageSet(tid);
-        for (Page page : pageSet) {
-            try {
-                flushPage(page);
-            } catch (IOException e) {
-                System.out.println("IO Exception");
-            }
         }
         Database.getLockManager().removeTxnMark(tid);
     }
@@ -331,6 +342,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
+        System.out.println("BufferPool: flush " + pid);
         Page p = LRUCache.get(pid);
         if (p == null) {
             return;
@@ -340,6 +352,7 @@ public class BufferPool {
     }
 
     private synchronized void flushPage(Page p) throws IOException {
+        System.out.println("BufferPool: flush " + p.getId());
         Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
         LRUCache.remove(p.getId());
     }

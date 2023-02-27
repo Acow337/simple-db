@@ -307,6 +307,7 @@ public class HeapPage implements Page {
      * that did the dirtying
      */
     public void markDirty(boolean dirty, TransactionId tid) {
+        System.out.println("HeapPage: " + pid + " get dirty");
         isDirty = dirty;
         lastTid = isDirty ? tid : null;
     }

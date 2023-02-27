@@ -83,7 +83,7 @@ public class AbortEvictionTest extends SimpleDbTestBase {
         assertTrue(found);
         // ABORT
         t.transactionComplete(true);
-        System.out.println("  abort end  ");
+        System.out.println("Transaction: abort end");
 
         // A second transaction must not find the tuple
         t = new Transaction();

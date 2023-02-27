@@ -139,7 +139,7 @@ public class HeapFile implements DbFile {
             if (pageNo >= numPages()) {
                 appendNewPage();
             }
-            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), Permissions.READ_WRITE);
+            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), Permissions.READ_ONLY);
             pageNo++;
         } while (page.isFull());
         // change the tuple's pageId

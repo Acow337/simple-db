@@ -26,6 +26,8 @@ public class LRUCache<K, T> {
     private DLinkedNode head, tail;
 
     public LRUCache(int capacity) {
+        System.out.println("LRUCache capacity: " + capacity);
+
         this.size = 0;
         this.capacity = capacity;
         head = new DLinkedNode();
@@ -42,8 +44,10 @@ public class LRUCache<K, T> {
         if (!cache.containsKey(key)) {
             return;
         }
+        System.out.println("LRUCatch: remove " + key);
         DLinkedNode node = cache.get(key);
         removeNode(node);
+        cache.remove(key);
         size--;
     }
 
@@ -71,6 +75,7 @@ public class LRUCache<K, T> {
 
     public Page put(PageId key, Page value) {
         DLinkedNode node = cache.get(key);
+        System.out.println("put: " + key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
             cache.put(key, newNode);
@@ -106,13 +111,20 @@ public class LRUCache<K, T> {
         addToHead(node);
     }
 
-    public DLinkedNode removeTail() {
+    private DLinkedNode removeTail() {
         DLinkedNode res = tail.prev;
         while (res.value != null && res.value.isDirty() != null) {
-            if (res.value == null) throw new RuntimeException("LRU error");
+            System.out.println(res.value.getId() + " is dirty, change to another one");
             res = res.prev;
+            if (res.value == null) throw new RuntimeException("LRU error");
         }
+        System.out.println(res.value.getId() + " gonna be removed");
         removeNode(res);
         return res;
     }
+
+    public int getSize() {
+        return size;
+    }
+
 }
