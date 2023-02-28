@@ -79,7 +79,7 @@ public class BTreeEntry implements Serializable {
 
     /**
      * @return the record id of this entry, representing the location of this entry
-     *         in a BTreeFile. May be null if this entry is not stored on any page in the file
+     * in a BTreeFile. May be null if this entry is not stored on any page in the file
      */
     public RecordId getRecordId() {
         return rid;
@@ -141,4 +141,3 @@ public class BTreeEntry implements Serializable {
     }
 
 }
-

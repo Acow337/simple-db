@@ -78,17 +78,17 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
-        System.out.println("BufferPool get page: " + pid);
+        System.out.println("BufferPool get page: " + pid + " perm: " + perm + " tid: " + tid);
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
             throw new TransactionAbortedException();
         }
-        if (perm == null || perm == Permissions.READ_WRITE) {
-            System.out.println("tid: " + tid + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
-        } else if (perm == Permissions.READ_ONLY) {
-            System.out.println("tid: " + tid + " prem: " + perm + " RLockByPage pageId: " + pid.toString());
-        }
+//        if (perm == null || perm == Permissions.READ_WRITE) {
+//            System.out.println("tid: " + tid + " prem: " + perm + " WLockByPage pageId: " + pid.toString());
+//        } else if (perm == Permissions.READ_ONLY) {
+//            System.out.println("tid: " + tid + " prem: " + perm + " RLockByPage pageId: " + pid.toString());
+//        }
 
         // get the page by catch or disk
         Page page = LRUCache.get(pid);

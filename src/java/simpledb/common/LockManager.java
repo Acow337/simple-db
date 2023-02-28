@@ -99,10 +99,13 @@ public class LockManager {
             lockNum++;
             if (request.tid == tid) {
                 formerRequest = request;
+                formerMode = request.lockMode;
             } else {
                 isOtherHasLock = true;
             }
         }
+
+        System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode);
 
         // if the txn already has lock on the page
         if (formerRequest != null) {
@@ -112,10 +115,12 @@ public class LockManager {
                     return;
                 } else if (mode == LockMode.EXCLUSIVE) {
                     if (isOtherHasLock) {
+                        System.out.println("LockManager:   upgrade failure   ");
                         // throw exception because deadlock may happen (upgrade failure)
                         throw new DeadlockException();
                     } else {
                         // upgrade the lock
+                        System.out.println("LockManager:   upgrade success   ");
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
                         return;
                     }
