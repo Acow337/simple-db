@@ -156,6 +156,7 @@ public class LockManager {
                         requestQueue.offer(newRequest);
                         return;
                     } else if (mode == LockMode.EXCLUSIVE) {
+                        System.out.println(tid + " the other lock is exclusive, wait some time");
                         putWaitForMap(tid.getId(), other.tid.getId());
                         requestQueue.latch.lock();
                         requestQueue.condition.awaitUninterruptibly();

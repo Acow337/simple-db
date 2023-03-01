@@ -114,6 +114,6 @@ public class Tuple implements Serializable {
             sb.append(f.getType().toString());
             sb.append(" ");
         }
-        return sb.toString();
+        return sb.toString() + " " + recordId;
     }
 }

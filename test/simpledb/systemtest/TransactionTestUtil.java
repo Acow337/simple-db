@@ -39,7 +39,7 @@ public class TransactionTestUtil {
 
         ModifiableCyclicBarrier latch = new ModifiableCyclicBarrier(threads);
         XactionTester[] list = new XactionTester[threads];
-        for(int i = 0; i < list.length; i++) {
+        for (int i = 0; i < list.length; i++) {
             list[i] = new XactionTester(table.getId(), latch);
             list[i].start();
         }
@@ -102,6 +102,7 @@ public class TransactionTestUtil {
                         SeqScan ss2 = new SeqScan(tr.getId(), tableId, "");
 
                         // read the value out of the table
+                        System.out.println(tr.getId() + " read the value out of the table");
                         Query q1 = new Query(ss1, tr.getId());
                         q1.start();
                         Tuple tup = q1.next();
@@ -111,7 +112,7 @@ public class TransactionTestUtil {
                         // create a Tuple so that Insert can insert this new value
                         // into the table.
                         Tuple t = new Tuple(SystemTestUtil.SINGLE_INT_DESCRIPTOR);
-                        t.setField(0, new IntField(i+1));
+                        t.setField(0, new IntField(i + 1));
 
                         // sleep to get some interesting thread interleavings
                         Thread.sleep(1);
@@ -119,6 +120,7 @@ public class TransactionTestUtil {
                         // race the other threads to finish the transaction: one will win
                         q1.close();
 
+                        System.out.println(tr.getId() + " delete old values (i.e., just one row) from table");
                         // delete old values (i.e., just one row) from table
                         Delete delOp = new Delete(tr.getId(), ss2);
 
@@ -133,6 +135,7 @@ public class TransactionTestUtil {
                         hs.add(t);
                         TupleIterator ti = new TupleIterator(t.getTupleDesc(), hs);
 
+                        System.out.println(tr.getId() + " insert this new tuple into the table " + t.toValueString());
                         // insert this new tuple into the table
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
@@ -154,7 +157,7 @@ public class TransactionTestUtil {
                 // Store exception for the master thread to handle
                 exception = e;
             }
-            
+
             try {
                 latch.notParticipating();
             } catch (InterruptedException | BrokenBarrierException e) {
@@ -163,22 +166,22 @@ public class TransactionTestUtil {
             completed = true;
         }
     }
-    
+
     private static class ModifiableCyclicBarrier {
         private CountDownLatch awaitLatch;
         private CyclicBarrier participationLatch;
         private AtomicInteger nextParticipants;
-        
+
         public ModifiableCyclicBarrier(int parties) {
             reset(parties);
         }
-        
+
         private void reset(int parties) {
             nextParticipants = new AtomicInteger(0);
             awaitLatch = new CountDownLatch(parties);
             participationLatch = new CyclicBarrier(parties, new UpdateLatch(this, nextParticipants));
         }
-        
+
         public void await() throws InterruptedException {
             awaitLatch.countDown();
             awaitLatch.await();
@@ -196,7 +199,7 @@ public class TransactionTestUtil {
         private static class UpdateLatch implements Runnable {
             final ModifiableCyclicBarrier latch;
             final AtomicInteger nextParticipants;
-            
+
             public UpdateLatch(ModifiableCyclicBarrier latch, AtomicInteger nextParticipants) {
                 this.latch = latch;
                 this.nextParticipants = nextParticipants;
@@ -208,7 +211,7 @@ public class TransactionTestUtil {
                 if (participants > 0) {
                     latch.reset(participants);
                 }
-            }           
+            }
         }
     }
 }

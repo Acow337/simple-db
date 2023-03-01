@@ -263,6 +263,7 @@ public class BufferPool {
      * @param t       the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
+        System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString());
         HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
         if (p != null) {
             p.insertTuple(t);
@@ -297,7 +298,7 @@ public class BufferPool {
             return;
         }
         // if can't find the page, get page from disk
-        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).insertTuple(tid, t);
+        List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         for (Page page : modifiedPages) {
             LRUCache.put(page.getId(), page);
         }
