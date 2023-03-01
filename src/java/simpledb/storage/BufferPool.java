@@ -1,5 +1,6 @@
 package simpledb.storage;
 
+import simpledb.Debug;
 import simpledb.common.*;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
@@ -266,11 +267,13 @@ public class BufferPool {
         System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString());
         HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
         if (p != null) {
+            Debug.printTxn(tid, "insert to buffer page");
             p.insertTuple(t);
             p.markDirty(true, tid);
             return;
         }
         // if can't find the page, get page from disk
+        Debug.printTxn(tid, "insert to disk");
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for (Page page : modifiedPages) {
             LRUCache.put(page.getId(), page);

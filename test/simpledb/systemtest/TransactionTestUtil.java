@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import simpledb.Debug;
 import simpledb.common.Database;
 import simpledb.common.DbException;
 import simpledb.execution.Delete;
@@ -120,7 +121,7 @@ public class TransactionTestUtil {
                         // race the other threads to finish the transaction: one will win
                         q1.close();
 
-                        System.out.println(tr.getId() + " delete old values (i.e., just one row) from table");
+                        Debug.printTxn(tr.getId(), "delete old values (i.e., just one row) from table");
                         // delete old values (i.e., just one row) from table
                         Delete delOp = new Delete(tr.getId(), ss2);
 
@@ -129,20 +130,22 @@ public class TransactionTestUtil {
                         q2.start();
                         q2.next();
                         q2.close();
+                        Debug.printTxn(tr.getId(), "delete end");
 
                         // set up a Set with a tuple that is one higher than the old one.
                         Set<Tuple> hs = new HashSet<>();
                         hs.add(t);
                         TupleIterator ti = new TupleIterator(t.getTupleDesc(), hs);
-
-                        System.out.println(tr.getId() + " insert this new tuple into the table " + t.toValueString());
+                        Debug.printTxn(tr.getId(), "insert this new tuple into the table " + t.toValueString());
                         // insert this new tuple into the table
                         Insert insOp = new Insert(tr.getId(), ti, tableId);
                         Query q3 = new Query(insOp, tr.getId());
                         q3.start();
                         q3.next();
                         q3.close();
+                        Debug.printTxn(tr.getId(), "insert end");
 
+                        Debug.printTxn(tr.getId(), "commit");
                         tr.commit();
                         break;
                     } catch (TransactionAbortedException te) {

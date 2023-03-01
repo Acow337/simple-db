@@ -44,7 +44,7 @@ public class LRUCache<K, T> {
         if (!cache.containsKey(key)) {
             return;
         }
-        System.out.println("LRUCatch: remove " + key);
+//        System.out.println("LRUCatch: remove " + key);
         DLinkedNode node = cache.get(key);
         removeNode(node);
         cache.remove(key);
@@ -75,7 +75,7 @@ public class LRUCache<K, T> {
 
     public Page put(PageId key, Page value) {
         DLinkedNode node = cache.get(key);
-        System.out.println("put: " + key);
+//        System.out.println("put: " + key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
             cache.put(key, newNode);
