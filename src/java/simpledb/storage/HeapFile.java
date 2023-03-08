@@ -139,9 +139,18 @@ public class HeapFile implements DbFile {
             if (pageNo >= numPages()) {
                 appendNewPage();
             }
-            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), Permissions.READ_ONLY);
+            page = (HeapPage) Database.getBufferPool().getPage(new HeapPageId(id, pageNo));
+//            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), Permissions.READ_ONLY);
             pageNo++;
         } while (page.isFull());
+        // Try to get write lock
+
+        try {
+            Database.getLockManager().lockPage(tid, page.pid, Permissions.READ_WRITE);
+        } catch (DeadlockException e) {
+            throw new TransactionAbortedException();
+        }
+
         // change the tuple's pageId
 //        t.setRecordId(new RecordId(new HeapPageId(id, pageNo - 1), t.getRecordId().getTupleNumber()));
         page.insertTuple(t);

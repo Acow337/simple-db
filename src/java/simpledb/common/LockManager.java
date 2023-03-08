@@ -2,6 +2,7 @@ package simpledb.common;
 
 import simpledb.storage.Page;
 import simpledb.storage.PageId;
+import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
 import java.util.*;
@@ -55,6 +56,10 @@ public class LockManager {
     private Map<TransactionId, Set<PageId>> txnMarkMap;
     private Thread cycleDetectionThread;
     private volatile boolean enableCycleDetection;
+    public Lock upgradeWaitLock;
+    public Condition upgradeWaitCondition;
+    public Lock lock;
+
 
     public LockManager() {
         enableCycleDetection = true;
@@ -63,11 +68,15 @@ public class LockManager {
         txnMarkMap = new ConcurrentHashMap<>();
         //TODO
         cycleDetectionThread = new Thread();
+        upgradeWaitLock = new ReentrantLock();
+        upgradeWaitCondition = upgradeWaitLock.newCondition();
+        lock = new ReentrantLock();
     }
 
 
     public void lockPage(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException {
         System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString());
+        lock.lock();
         if (!pageLockMap.containsKey(pageId)) pageLockMap.put(pageId, new LockRequestQueue());
         if (!txnMarkMap.containsKey(tid)) txnMarkMap.put(tid, new HashSet<>());
         txnMarkMap.get(tid).add(pageId);
@@ -91,6 +100,7 @@ public class LockManager {
             System.out.println("pageId: " + pageId + " queue size: " + requestQueue.queue.size());
             System.out.println(tid + " requestQueue is empty, get directly");
             requestQueue.offer(newRequest);
+            lock.unlock();
             return;
         }
 
@@ -105,34 +115,49 @@ public class LockManager {
             }
         }
 
-        System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode);
+        System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode + " mode:" + mode);
 
         // if the txn already has lock on the page
         if (formerRequest != null) {
             // the txn already has lock
             if (formerMode == LockMode.SHARED) {
                 if (mode == LockMode.SHARED) {
-                    return;
+
                 } else if (mode == LockMode.EXCLUSIVE) {
                     if (isOtherHasLock) {
-                        System.out.println("LockManager:   upgrade failure   ");
-                        // throw exception because deadlock may happen (upgrade failure)
-                        throw new DeadlockException();
+                        // when 2 Txn race, one should abort, the other should wait and retry
+                        System.out.println("LockManager:   upgrade failure   tid: " + tid);
+                        // wait some time, check if the queue has other lock (when size > 1, mean has other lock)
+                        boolean b = false;
+                        try {
+                            b = upgradeWaitLock.tryLock(100, TimeUnit.MILLISECONDS);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        if (b) {
+                            System.out.println(" ====wait==== ");
+                            lock.unlock();
+                            upgradeWaitCondition.awaitUninterruptibly();
+                            System.out.println(" ====wait end==== ");
+                            upgradeWaitLock.unlock();
+                            lockPage(tid, pageId, perm);
+                        } else {
+                            System.out.println("abort for upgrade");
+                            lock.unlock();
+                            throw new DeadlockException();
+                        }
                     } else {
                         // upgrade the lock
                         System.out.println("LockManager:   upgrade success   ");
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
-                        return;
                     }
                 }
             } else if (formerMode == LockMode.EXCLUSIVE) {
-                return;
             }
         } else {
             if (lockNum > 1) {
                 if (newRequest.lockMode == LockMode.SHARED) {
                     requestQueue.offer(newRequest);
-                    return;
                 } else {
                     for (LockRequest request : requestQueue.queue) {
                         putWaitForMap(tid.getId(), request.tid.getId());
@@ -154,7 +179,6 @@ public class LockManager {
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
-                        return;
                     } else if (mode == LockMode.EXCLUSIVE) {
                         System.out.println(tid + " the other lock is exclusive, wait some time");
                         putWaitForMap(tid.getId(), other.tid.getId());
@@ -166,6 +190,7 @@ public class LockManager {
                 }
             }
         }
+        lock.unlock();
     }
 
     public void unLockPage(TransactionId tid, PageId pageId) {

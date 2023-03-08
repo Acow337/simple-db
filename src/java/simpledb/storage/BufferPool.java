@@ -80,6 +80,7 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
         System.out.println("BufferPool get page: " + pid + " perm: " + perm + " tid: " + tid);
+        System.out.println(LRUCache.toString());
         try {
             Database.getLockManager().lockPage(tid, pid, perm);
         } catch (DeadlockException e) {
@@ -118,6 +119,7 @@ public class BufferPool {
     // internal use, no lock
     public Page getPage(PageId pid) throws DbException {
         System.out.println("BufferPool get page: " + pid);
+        System.out.println(LRUCache.toString());
         if (LRUCache.containsKey(pid)) {
             System.out.println("BufferPool: " + "get from catch, catchSize: " + LRUCache.getSize());
             return LRUCache.get(pid);
@@ -154,7 +156,6 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) {
-        System.out.println("transactionComplete " + "tid: " + tid.toString());
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         if (markPages == null) {
             Database.getLockManager().removeTxnMark(tid);
@@ -169,6 +170,7 @@ public class BufferPool {
             }
         }
         Database.getLockManager().removeTxnMark(tid);
+        System.out.println("transactionComplete " + "tid: " + tid.toString());
     }
 
 //    public void transactionReverse(TransactionId tid) {
@@ -230,6 +232,10 @@ public class BufferPool {
             LRUCache.remove(pid);
         }
         Database.getLockManager().removeTxnMark(tid);
+        Database.getLockManager().upgradeWaitLock.lock();
+        Database.getLockManager().upgradeWaitCondition.signalAll();
+        Database.getLockManager().upgradeWaitLock.unlock();
+        System.out.println("Transaction: abort end");
     }
 
 
@@ -265,8 +271,8 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
         System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString());
-        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
-        if (p != null) {
+        if (t.getRecordId() != null) {
+            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
             Debug.printTxn(tid, "insert to buffer page");
             p.insertTuple(t);
             p.markDirty(true, tid);
@@ -294,8 +300,9 @@ public class BufferPool {
      * @param t   the tuple to delete
      */
     public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
-        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
-        if (p != null) {
+//        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
+        if (t.getRecordId() != null) {
+            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
             p.deleteTuple(t);
             p.markDirty(true, tid);
             return;

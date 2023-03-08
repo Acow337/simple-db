@@ -40,7 +40,7 @@ public class LRUCache<K, T> {
         return cache.containsKey(key);
     }
 
-    public void remove(PageId key) {
+    public synchronized void remove(PageId key) {
         if (!cache.containsKey(key)) {
             return;
         }
@@ -65,6 +65,7 @@ public class LRUCache<K, T> {
     }
 
     public Page get(PageId key) {
+        System.out.println("Get: " + key + " " + toString());
         DLinkedNode node = cache.get(key);
         if (node == null) {
             return null;
@@ -73,20 +74,21 @@ public class LRUCache<K, T> {
         return node.value;
     }
 
-    public Page put(PageId key, Page value) {
+    public synchronized Page put(PageId key, Page value) throws DbException {
         DLinkedNode node = cache.get(key);
-//        System.out.println("put: " + key);
+        System.out.println("put: " + key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
-            cache.put(key, newNode);
-            addToHead(newNode);
-            ++size;
-            if (size > capacity) {
+            if (size >= capacity) {
+                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
                 DLinkedNode tail = removeTail();
                 DLinkedNode remove = cache.remove(tail.key);
                 --size;
                 return remove.value;
             }
+            addToHead(newNode);
+            cache.put(key, newNode);
+            ++size;
         } else {
             node.value = value;
             moveToHead(node);
@@ -106,17 +108,18 @@ public class LRUCache<K, T> {
         node.next.prev = node.prev;
     }
 
-    private void moveToHead(DLinkedNode node) {
+    private synchronized void moveToHead(DLinkedNode node) {
         removeNode(node);
         addToHead(node);
     }
 
-    private DLinkedNode removeTail() {
+    private DLinkedNode removeTail() throws DbException {
+        System.out.println("removeTail :" + toString());
         DLinkedNode res = tail.prev;
         while (res.value != null && res.value.isDirty() != null) {
             System.out.println(res.value.getId() + " is dirty, change to another one");
             res = res.prev;
-            if (res.value == null) throw new RuntimeException("LRU error");
+            if (res.value == null) throw new DbException("LRU error");
         }
         System.out.println(res.value.getId() + " gonna be removed");
         removeNode(res);
@@ -125,6 +128,24 @@ public class LRUCache<K, T> {
 
     public int getSize() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        DLinkedNode node = head;
+        while (node != null) {
+            if (node.prev == null) {
+                sb.append("head->");
+            } else if (node.next == null) {
+                sb.append("tail");
+            } else {
+                sb.append(node.value.getId());
+                sb.append("->");
+            }
+            node = node.next;
+        }
+        return sb.toString();
     }
 
 }

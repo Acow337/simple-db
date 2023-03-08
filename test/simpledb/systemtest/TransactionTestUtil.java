@@ -121,6 +121,7 @@ public class TransactionTestUtil {
                         // race the other threads to finish the transaction: one will win
                         q1.close();
 
+                        System.out.println(tr.getId() + " read end");
                         Debug.printTxn(tr.getId(), "delete old values (i.e., just one row) from table");
                         // delete old values (i.e., just one row) from table
                         Delete delOp = new Delete(tr.getId(), ss2);
@@ -149,7 +150,7 @@ public class TransactionTestUtil {
                         tr.commit();
                         break;
                     } catch (TransactionAbortedException te) {
-                        //System.out.println("thread " + tr.getId() + " killed");
+                        System.out.println("thread " + tr.getId() + " killed");
                         // give someone else a chance: abort the transaction
                         tr.transactionComplete(true);
                         latch.stillParticipating();
