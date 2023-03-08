@@ -74,6 +74,10 @@ public class LRUCache<K, T> {
         return node.value;
     }
 
+    public Set<PageId> getIds() {
+        return cache.keySet();
+    }
+
     public synchronized Page put(PageId key, Page value) throws DbException {
         DLinkedNode node = cache.get(key);
         System.out.println("put: " + key);

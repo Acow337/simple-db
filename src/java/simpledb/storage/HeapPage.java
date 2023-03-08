@@ -268,11 +268,14 @@ public class HeapPage implements Page {
             throw new DbException("page is empty");
         int i = t.getRecordId().getTupleNumber();
         System.out.println("Delete: origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString());
-        if (!isSlotUsed(i) || !tuples[i].equals(t)) {
-            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString());
+        if (!isSlotUsed(i)) {
+            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !isSlotUsed(i)");
             return;
-//            throw new DbException("delete nonexistent tuple !isSlotUsed(i) " + !isSlotUsed(i) + " !t.equals(tuples[i]) " + !t.equals(tuples[i]));
         }
+//        if (!tuples[i].equals(t)) {
+//            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !tuples[i].equals(t)");
+//            return;
+//        }
         int a = i / 8;
         int b = i % 8;
         header[a] = (byte) (header[a] & (~(0x1 << b)));
@@ -333,6 +336,18 @@ public class HeapPage implements Page {
             }
         }
         return numSlots - usedNum;
+    }
+
+    public int getUsedSlots() {
+        int usedNum = 0;
+        for (byte b : header) {
+            for (int i = 0; i < 8; i++) {
+                if (((b >> i) & 1) == 1) {
+                    usedNum++;
+                }
+            }
+        }
+        return usedNum;
     }
 
     public boolean isFull() {

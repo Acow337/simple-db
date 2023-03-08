@@ -62,6 +62,18 @@ public class BufferPool {
         BufferPool.pageSize = DEFAULT_PAGE_SIZE;
     }
 
+    public Page getNotFullPageFromCache(int tableid) throws DbException {
+        Set<PageId> ids = LRUCache.getIds();
+        for (PageId id : ids) {
+            if (id.getTableId() == tableid) {
+                HeapPage page = (HeapPage) getPage(id);
+                if (!page.isFull())
+                    return page;
+            }
+        }
+        return null;
+    }
+
     /**
      * Retrieve the specified page with the associated permissions.
      * Will acquire a lock and may block if that lock is held by another
@@ -87,15 +99,18 @@ public class BufferPool {
             throw new TransactionAbortedException();
         }
 
-
         // get the page by catch or disk
         Page page = LRUCache.get(pid);
         // the removed page
         Page remove = null;
+        System.out.println("BufferPool: " + LRUCache);
         if (page == null) {
+            System.out.println("BufferPool From Disk get page: " + pid + " perm: " + perm + " tid: " + tid);
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             // add the Page to Map
             remove = LRUCache.put(page.getId(), page);
+        } else {
+            System.out.println("BufferPool From Catch get page: " + pid + " perm: " + perm + " tid: " + tid);
         }
 
         // mark the page if it is dirty by the perm
@@ -103,12 +118,12 @@ public class BufferPool {
             page.markDirty(true, tid);
         }
 
-        // flush the removed page to disk
-        try {
-            if (remove != null && remove.isDirty() != null) flushPage(remove);
-        } catch (IOException e) {
-            throw new DbException("IO Exception");
-        }
+        // flush the removed page to disk (NO STEAL)
+//        try {
+//            if (remove != null && remove.isDirty() != null) flushPage(remove);
+//        } catch (IOException e) {
+//            throw new DbException("IO Exception");
+//        }
         return page;
     }
 
@@ -221,14 +236,16 @@ public class BufferPool {
 
 
     public void transactionAbort(TransactionId tid) {
-        System.out.println("Transaction: abort begin");
+        System.out.println("Transaction: abort begin " + tid);
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         for (PageId pid : markPages) {
             unsafeReleasePage(tid, pid);
             LRUCache.remove(pid);
         }
         Database.getLockManager().removeTxnMark(tid);
-        System.out.println("Transaction: abort end");
+        System.out.println("Transaction: notify " + tid + " " + Database.getLockManager());
+
+        System.out.println("Transaction: abort end " + tid);
     }
 
 
@@ -266,13 +283,12 @@ public class BufferPool {
         System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString());
         if (t.getRecordId() != null) {
             HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-            Debug.printTxn(tid, "insert to buffer page");
             p.insertTuple(t);
             p.markDirty(true, tid);
             return;
         }
         // if can't find the page, get page from disk
-        Debug.printTxn(tid, "insert to disk");
+        Debug.printTxn(tid, "insert begin");
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for (Page page : modifiedPages) {
             LRUCache.put(page.getId(), page);
@@ -294,10 +310,13 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
 //        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
+
         if (t.getRecordId() != null) {
             HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
+            System.out.println("Before delete: " + p.getUsedSlots());
             p.deleteTuple(t);
             p.markDirty(true, tid);
+            System.out.println("After delete: " + p.getUsedSlots());
             return;
         }
         // if can't find the page, get page from disk

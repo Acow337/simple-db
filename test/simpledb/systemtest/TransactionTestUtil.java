@@ -113,6 +113,7 @@ public class TransactionTestUtil {
                         // create a Tuple so that Insert can insert this new value
                         // into the table.
                         Tuple t = new Tuple(SystemTestUtil.SINGLE_INT_DESCRIPTOR);
+                        System.out.println(tr.getId() + " get value " + (i + 1));
                         t.setField(0, new IntField(i + 1));
 
                         // sleep to get some interesting thread interleavings
@@ -120,8 +121,6 @@ public class TransactionTestUtil {
 
                         // race the other threads to finish the transaction: one will win
                         q1.close();
-
-                        System.out.println(tr.getId() + " read end");
                         Debug.printTxn(tr.getId(), "delete old values (i.e., just one row) from table");
                         // delete old values (i.e., just one row) from table
                         Delete delOp = new Delete(tr.getId(), ss2);

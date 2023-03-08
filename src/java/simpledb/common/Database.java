@@ -2,9 +2,13 @@ package simpledb.common;
 
 import simpledb.storage.BufferPool;
 import simpledb.storage.LogFile;
+import simpledb.transaction.TransactionId;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -24,6 +28,7 @@ public class Database {
     private final static String LOGFILENAME = "log";
     private final LogFile _logfile;
     private final LockManager _lockmanager;
+    private final Set<TransactionId> abortTids;
 
     private Database() {
         _catalog = new Catalog();
@@ -37,6 +42,7 @@ public class Database {
             System.exit(1);
         }
         _logfile = tmp;
+        abortTids = new CopyOnWriteArraySet<>();
         // startControllerThread();
     }
 

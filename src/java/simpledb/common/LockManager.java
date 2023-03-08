@@ -22,6 +22,7 @@ public class LockManager {
         public TransactionId tid;
         public LockMode lockMode;
         public boolean granted = false;
+        public boolean tryUpgrade = false;
 
         public LockRequest(TransactionId tid, LockMode lockMode, PageId pageId) {
             this.tid = tid;
@@ -54,30 +55,37 @@ public class LockManager {
     private Map<PageId, LockRequestQueue> pageLockMap;
     private Map<Long, List<Long>> waitsForMap;
     private Map<TransactionId, Set<PageId>> txnMarkMap;
+    private Queue<TransactionId> abortQueue;
+    public Lock lock;
+    public Condition condition;
 
 
     public LockManager() {
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
         txnMarkMap = new ConcurrentHashMap<>();
+        abortQueue = new ConcurrentLinkedQueue<>();
+        lock = new ReentrantLock();
+        condition = lock.newCondition();
     }
 
     public void acquireLock(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException, TransactionAbortedException {
+        System.out.println("Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
         long begin = System.currentTimeMillis();
-        while (!lockPage(tid, pageId, perm, 0)) {
-            System.out.println("wait");
-            if (System.currentTimeMillis() - begin > 500)
-                throw new TransactionAbortedException();
-            try {
+        try {
+            while (!lockPage(tid, pageId, perm, 0)) {
+                if (System.currentTimeMillis() - begin > 1000) {
+                    throw new TransactionAbortedException();
+                }
                 Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new TransactionAbortedException();
             }
+        } catch (InterruptedException e) {
+            throw new TransactionAbortedException();
         }
-        System.out.println("get Lock: tid: " + tid + " pageId: " + pageId + " perm: " + perm);
+        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
     }
 
-    private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException {
+    private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException, InterruptedException, TransactionAbortedException {
         System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString() + " retry: " + retry);
         if (retry > 3) {
             return false;
@@ -90,6 +98,7 @@ public class LockManager {
         LockRequest formerRequest = null;
         int lockNum = 0;
         boolean isOtherHasLock = false;
+        boolean isOtherTryUpgrade = false;
         if (perm == Permissions.READ_ONLY) {
             mode = LockMode.SHARED;
         } else if (perm == Permissions.READ_WRITE) {
@@ -117,6 +126,10 @@ public class LockManager {
             } else {
                 isOtherHasLock = true;
             }
+            // if other txn try to upgrade the lock
+            if (request.tryUpgrade && request.tid != tid) {
+                isOtherTryUpgrade = true;
+            }
         }
 
         System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode + " mode:" + mode);
@@ -130,12 +143,19 @@ public class LockManager {
                 } else if (mode == LockMode.EXCLUSIVE) {
                     if (isOtherHasLock) {
                         // when 2 Txn race, one should abort, the other should wait and retry
-                        System.out.println("LockManager:   upgrade failure   tid: " + tid);
-                        return lockPage(tid, pageId, perm, retry + 1);
+                        System.out.println("LockManager: upgrade failure, wait tid: " + tid + " waitqueue size: " + abortQueue.size());
+                        if (isOtherTryUpgrade) {
+                            System.out.println("LockManager: OtherTryUpgrade abort tid: " + tid);
+                            throw new TransactionAbortedException();
+                        } else {
+                            formerRequest.tryUpgrade = true;
+                            return false;
+                        }
                     } else {
                         // upgrade the lock
-                        System.out.println("LockManager:   upgrade success   ");
+                        System.out.println("LockManager:   upgrade success tid: " + tid);
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
+                        formerRequest.tryUpgrade = false;
                     }
                 }
             } else if (formerMode == LockMode.EXCLUSIVE) {
@@ -149,21 +169,21 @@ public class LockManager {
                     for (LockRequest request : requestQueue.queue) {
                         putWaitForMap(tid.getId(), request.tid.getId());
                     }
-                    return lockPage(tid, pageId, perm, retry + 1);
+                    return false;
                 }
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
                     System.out.println(tid + " the other lock is exclusive, wait some time");
                     putWaitForMap(tid.getId(), other.tid.getId());
-                    return lockPage(tid, pageId, perm, retry + 1);
+                    return false;
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
                     } else if (mode == LockMode.EXCLUSIVE) {
                         System.out.println(tid + " the other lock is exclusive, wait some time");
                         putWaitForMap(tid.getId(), other.tid.getId());
-                        return lockPage(tid, pageId, perm, retry + 1);
+                        return false;
                     }
                 }
             }
@@ -175,15 +195,13 @@ public class LockManager {
         System.out.println("unLockPage tid: " + tid + " pageId: " + pageId);
         LockRequestQueue requestQueue = pageLockMap.get(pageId);
         LockRequest removeRequest = null;
+        System.out.println("unLockPage tid: " + "get requestQueue");
         for (LockRequest request : requestQueue.queue) {
             if (tid == request.tid) {
                 removeRequest = request;
             }
         }
         requestQueue.queue.remove(removeRequest);
-        requestQueue.latch.lock();
-        requestQueue.condition.signalAll();
-        requestQueue.latch.unlock();
     }
 
     public Set<PageId> getMarkPages(TransactionId tid) {
