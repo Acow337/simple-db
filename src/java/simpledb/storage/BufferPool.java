@@ -228,9 +228,6 @@ public class BufferPool {
             LRUCache.remove(pid);
         }
         Database.getLockManager().removeTxnMark(tid);
-        Database.getLockManager().upgradeWaitLock.lock();
-        Database.getLockManager().upgradeWaitCondition.signalAll();
-        Database.getLockManager().upgradeWaitLock.unlock();
         System.out.println("Transaction: abort end");
     }
 
