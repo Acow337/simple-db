@@ -140,13 +140,12 @@ public class HeapFile implements DbFile {
                 appendNewPage();
             }
             page = (HeapPage) Database.getBufferPool().getPage(new HeapPageId(id, pageNo));
-//            page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(id, pageNo), Permissions.READ_ONLY);
             pageNo++;
         } while (page.isFull());
         // Try to get write lock
 
         try {
-            Database.getLockManager().lockPage(tid, page.pid, Permissions.READ_WRITE);
+            Database.getLockManager().acquireLock(tid, page.pid, Permissions.READ_WRITE);
         } catch (DeadlockException e) {
             throw new TransactionAbortedException();
         }

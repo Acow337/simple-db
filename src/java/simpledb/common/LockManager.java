@@ -54,29 +54,34 @@ public class LockManager {
     private Map<PageId, LockRequestQueue> pageLockMap;
     private Map<Long, List<Long>> waitsForMap;
     private Map<TransactionId, Set<PageId>> txnMarkMap;
-    private Thread cycleDetectionThread;
-    private volatile boolean enableCycleDetection;
-    public Lock upgradeWaitLock;
-    public Condition upgradeWaitCondition;
-    public Lock lock;
 
 
     public LockManager() {
-        enableCycleDetection = true;
         pageLockMap = new ConcurrentHashMap<>();
         waitsForMap = new ConcurrentHashMap<>();
         txnMarkMap = new ConcurrentHashMap<>();
-        //TODO
-        cycleDetectionThread = new Thread();
-        upgradeWaitLock = new ReentrantLock();
-        upgradeWaitCondition = upgradeWaitLock.newCondition();
-        lock = new ReentrantLock();
     }
 
+    public void acquireLock(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException, TransactionAbortedException {
+        long begin = System.currentTimeMillis();
+        while (!lockPage(tid, pageId, perm, 0)) {
+            System.out.println("wait");
+            if (System.currentTimeMillis() - begin > 500)
+                throw new TransactionAbortedException();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new TransactionAbortedException();
+            }
+        }
+        System.out.println("get Lock: tid: " + tid + " pageId: " + pageId + " perm: " + perm);
+    }
 
-    public void lockPage(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException {
-        System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString());
-        lock.lock();
+    private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException {
+        System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString() + " retry: " + retry);
+        if (retry > 3) {
+            return false;
+        }
         if (!pageLockMap.containsKey(pageId)) pageLockMap.put(pageId, new LockRequestQueue());
         if (!txnMarkMap.containsKey(tid)) txnMarkMap.put(tid, new HashSet<>());
         txnMarkMap.get(tid).add(pageId);
@@ -100,8 +105,7 @@ public class LockManager {
             System.out.println("pageId: " + pageId + " queue size: " + requestQueue.queue.size());
             System.out.println(tid + " requestQueue is empty, get directly");
             requestQueue.offer(newRequest);
-            lock.unlock();
-            return;
+            return true;
         }
 
         // check if the txn already has lock
@@ -127,25 +131,7 @@ public class LockManager {
                     if (isOtherHasLock) {
                         // when 2 Txn race, one should abort, the other should wait and retry
                         System.out.println("LockManager:   upgrade failure   tid: " + tid);
-                        // wait some time, check if the queue has other lock (when size > 1, mean has other lock)
-                        boolean b = false;
-                        try {
-                            b = upgradeWaitLock.tryLock(100, TimeUnit.MILLISECONDS);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        if (b) {
-                            System.out.println(" ====wait==== ");
-                            lock.unlock();
-                            upgradeWaitCondition.awaitUninterruptibly();
-                            System.out.println(" ====wait end==== ");
-                            upgradeWaitLock.unlock();
-                            lockPage(tid, pageId, perm);
-                        } else {
-                            System.out.println("abort for upgrade");
-                            lock.unlock();
-                            throw new DeadlockException();
-                        }
+                        return lockPage(tid, pageId, perm, retry + 1);
                     } else {
                         // upgrade the lock
                         System.out.println("LockManager:   upgrade success   ");
@@ -153,6 +139,7 @@ public class LockManager {
                     }
                 }
             } else if (formerMode == LockMode.EXCLUSIVE) {
+
             }
         } else {
             if (lockNum > 1) {
@@ -162,35 +149,26 @@ public class LockManager {
                     for (LockRequest request : requestQueue.queue) {
                         putWaitForMap(tid.getId(), request.tid.getId());
                     }
-                    requestQueue.latch.lock();
-                    requestQueue.condition.awaitUninterruptibly();
-                    requestQueue.latch.unlock();
-                    lockPage(tid, pageId, perm);
+                    return lockPage(tid, pageId, perm, retry + 1);
                 }
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
                     System.out.println(tid + " the other lock is exclusive, wait some time");
                     putWaitForMap(tid.getId(), other.tid.getId());
-                    requestQueue.latch.lock();
-                    requestQueue.condition.awaitUninterruptibly();
-                    requestQueue.latch.unlock();
-                    lockPage(tid, pageId, perm);
+                    return lockPage(tid, pageId, perm, retry + 1);
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
                     } else if (mode == LockMode.EXCLUSIVE) {
                         System.out.println(tid + " the other lock is exclusive, wait some time");
                         putWaitForMap(tid.getId(), other.tid.getId());
-                        requestQueue.latch.lock();
-                        requestQueue.condition.awaitUninterruptibly();
-                        requestQueue.latch.unlock();
-                        lockPage(tid, pageId, perm);
+                        return lockPage(tid, pageId, perm, retry + 1);
                     }
                 }
             }
         }
-        lock.unlock();
+        return true;
     }
 
     public void unLockPage(TransactionId tid, PageId pageId) {
