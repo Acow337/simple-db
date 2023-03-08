@@ -30,6 +30,8 @@ public class Database {
     private final LockManager _lockmanager;
     private final Set<TransactionId> abortTids;
 
+    private final TransactionId nullTid;
+
     private Database() {
         _catalog = new Catalog();
         _bufferpool = new BufferPool(BufferPool.DEFAULT_PAGES);
@@ -43,6 +45,7 @@ public class Database {
         }
         _logfile = tmp;
         abortTids = new CopyOnWriteArraySet<>();
+        nullTid = new TransactionId();
         // startControllerThread();
     }
 
@@ -93,4 +96,7 @@ public class Database {
         _instance.set(new Database());
     }
 
+    public static TransactionId getNullTid() {
+        return _instance.get().nullTid;
+    }
 }

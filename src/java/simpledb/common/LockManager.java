@@ -91,7 +91,14 @@ public class LockManager {
             return false;
         }
         if (!pageLockMap.containsKey(pageId)) pageLockMap.put(pageId, new LockRequestQueue());
-        if (!txnMarkMap.containsKey(tid)) txnMarkMap.put(tid, new HashSet<>());
+
+        if (tid == null) {
+            tid = Database.getNullTid();
+        }
+        System.out.println(txnMarkMap + "======");
+        if (!txnMarkMap.containsKey(tid)) {
+            txnMarkMap.put(tid, new HashSet<>());
+        }
         txnMarkMap.get(tid).add(pageId);
         LockMode mode = null;
         LockMode formerMode = null;
