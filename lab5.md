@@ -59,13 +59,12 @@ of the tree: internal pages and leaf pages. Internal pages are implemented in
 `BTreeLeafPage.java`. For convenience, we have created an abstract class in
 `BTreePage.java` which contains code that is common to both leaf and internal
 pages. In addition, header pages are implemented in `BTreeHeaderPage.java` and
-keep track of which pages in the file are in use. Lastly, there is one page at
-the beginning of every BTreeFile which points to the root page of the tree and
-the first header page. This singleton page is implemented in
+**keep track of which pages in the file are in use**. Lastly, there is one page at
+the beginning of every BTreeFile which **points to the root page of the tree and**
+**the first header page**. This singleton page is implemented in
 `BTreeRootPtrPage.java`. Familiarize yourself with the interfaces of these
 classes, especially `BTreePage`, `BTreeInternalPage` and `BTreeLeafPage`. You
 will need to use these classes in your implementation of the B+Tree.
-
 
 Your first job is to implement the `findLeafPage()` function in
 `BTreeFile.java`. This function is used to find the appropriate leaf page given
@@ -80,7 +79,6 @@ should return the first (left) leaf page.
 
 <p align="center"> <img width=500 src="lab5-simple_tree.png"><br> <i>Figure 1: A
 simple B+ Tree with duplicate keys</i> </p>
-
 Your `findLeafPage()` function should recursively search through internal nodes
 until it reaches the leaf page corresponding to the provided key value. In order
 to find the appropriate child page at each step, you should iterate through the
@@ -90,9 +88,9 @@ internal page using the interface defined in `BTreeEntry.java`. This iterator
 allows you to iterate through the key values in the internal page and access the
 left and right child page ids for each key.  The base case of your recursion
 happens when the passed-in BTreePageId has `pgcateg()` equal to
-`BTreePageId.LEAF`, indicating that it is a leaf page.  In this case, you should
-just fetch the page from the buffer pool and return it.  You do not need to
-confirm that it actually contains the provided key value f.
+`BTreePageId.LEAF`, indicating that it is a leaf page.  **In this case, you should**
+**just fetch the page from the buffer pool and return it.  You do not need to**
+**confirm that it actually contains the provided key value f**.
 
 Your `findLeafPage()` code must also handle the case when the provided key value
 f is null.  If the provided value is null, recurse on the left-most child every

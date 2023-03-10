@@ -185,8 +185,51 @@ public class BTreeFile implements DbFile {
     private BTreeLeafPage findLeafPage(TransactionId tid, Map<PageId, Page> dirtypages, BTreePageId pid, Permissions perm,
                                        Field f)
             throws DbException, TransactionAbortedException {
+
+        BTreePage page = (BTreePage) Database.getBufferPool().getPage(tid, pid, perm);
         // TODO: some code goes here
-        return null;
+        // if internalPage, find the proper child and then research
+        System.out.println("======find: " + pid);
+
+        if (f == null) {
+            if (page.getId().pgcateg() == BTreePageId.INTERNAL) {
+                BTreeInternalPage internalPage = (BTreeInternalPage) page;
+                Iterator<BTreeEntry> iterator = internalPage.iterator();
+                if (iterator.hasNext()) {
+                    BTreeEntry entry = iterator.next();
+                    if (entry.getLeftChild() != null) {
+                        return findLeafPage(tid, dirtypages, entry.getLeftChild(), perm, f);
+                    } else {
+                        return findLeafPage(tid, dirtypages, entry.getRightChild(), perm, f);
+                    }
+                } else {
+                    System.out.println("error");
+                }
+            } else if (page.getId().pgcateg() == BTreePageId.LEAF) {
+                return (BTreeLeafPage) page;
+            }
+        }
+
+        if (page.getId().pgcateg() == BTreePageId.INTERNAL) {
+            BTreeInternalPage internalPage = (BTreeInternalPage) page;
+            Iterator<BTreeEntry> iterator = internalPage.iterator();
+            BTreeEntry pre = null;
+            while (iterator.hasNext()) {
+                BTreeEntry entry = iterator.next();
+                if (pre == null && f.compare(Op.LESS_THAN_OR_EQ, entry.getKey())) {
+                    return findLeafPage(tid, dirtypages, entry.getLeftChild(), perm, f);
+                } else if (pre != null && f.compare(Op.GREATER_THAN_OR_EQ, pre.getKey()) && f.compare(Op.LESS_THAN_OR_EQ, entry.getKey())) {
+                    // research the pre's right child and the entry's left child
+                    return findLeafPage(tid, dirtypages, pre.getRightChild(), perm, f);
+                }
+                pre = entry;
+            }
+            return findLeafPage(tid, dirtypages, pre.getRightChild(), perm, f);
+        } else if (page.getId().pgcateg() == BTreePageId.LEAF) {
+            return (BTreeLeafPage) page;
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     /**
@@ -410,7 +453,7 @@ public class BTreeFile implements DbFile {
      * @param tid - the transaction id
      * @param t   - the tuple to insert
      * @return a list of all pages that were dirtied by this operation. Could include
-     *         many pages since parent pointers will need to be updated when an internal node splits.
+     * many pages since parent pointers will need to be updated when an internal node splits.
      * @see #splitLeafPage(TransactionId, Map, BTreeLeafPage, Field)
      */
     public List<Page> insertTuple(TransactionId tid, Tuple t)
@@ -767,7 +810,7 @@ public class BTreeFile implements DbFile {
      * @param tid - the transaction id
      * @param t   - the tuple to delete
      * @return a list of all pages that were dirtied by this operation. Could include
-     *         many pages since parent pointers will need to be updated when an internal node merges.
+     * many pages since parent pointers will need to be updated when an internal node merges.
      * @see #handleMinOccupancyPage(TransactionId, Map, BTreePage)
      */
     public List<Page> deleteTuple(TransactionId tid, Tuple t)
@@ -1139,6 +1182,7 @@ class BTreeSearchIterator extends AbstractDbFileIterator {
         BTreePageId root = rootPtr.getRootId();
         if (ipred.getOp() == Op.EQUALS || ipred.getOp() == Op.GREATER_THAN
                 || ipred.getOp() == Op.GREATER_THAN_OR_EQ) {
+            System.out.println("open: find " + ipred.getField());
             curp = f.findLeafPage(tid, root, ipred.getField());
         } else {
             curp = f.findLeafPage(tid, root, null);
