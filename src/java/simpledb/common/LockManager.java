@@ -70,7 +70,7 @@ public class LockManager {
     }
 
     public void acquireLock(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException, TransactionAbortedException {
-        System.out.println("Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
+//        System.out.println("Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
         long begin = System.currentTimeMillis();
         try {
             while (!lockPage(tid, pageId, perm, 0)) {
@@ -82,11 +82,11 @@ public class LockManager {
         } catch (InterruptedException e) {
             throw new TransactionAbortedException();
         }
-        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
+//        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
     }
 
     private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException, InterruptedException, TransactionAbortedException {
-        System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString() + " retry: " + retry);
+//        System.out.println("lockPage tid: " + tid + " pageId: " + pageId + " perm: " + perm.toString() + " retry: " + retry);
         if (retry > 3) {
             return false;
         }
@@ -95,7 +95,7 @@ public class LockManager {
         if (tid == null) {
             tid = Database.getNullTid();
         }
-        System.out.println(txnMarkMap + "======");
+//        System.out.println(txnMarkMap + "======");
         if (!txnMarkMap.containsKey(tid)) {
             txnMarkMap.put(tid, new HashSet<>());
         }
@@ -118,8 +118,8 @@ public class LockManager {
         // if no lock on the page, lock literally
         if (requestQueue.queue.isEmpty()) {
             newRequest.granted = true;
-            System.out.println("pageId: " + pageId + " queue size: " + requestQueue.queue.size());
-            System.out.println(tid + " requestQueue is empty, get directly");
+//            System.out.println("pageId: " + pageId + " queue size: " + requestQueue.queue.size());
+//            System.out.println(tid + " requestQueue is empty, get directly");
             requestQueue.offer(newRequest);
             return true;
         }
@@ -139,7 +139,7 @@ public class LockManager {
             }
         }
 
-        System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode + " mode:" + mode);
+//        System.out.println("requestQueue is: " + requestQueue.queue.size() + " formerRequest: " + (formerRequest != null) + " formerMode: " + formerMode + " mode:" + mode);
 
         // if the txn already has lock on the page
         if (formerRequest != null) {
@@ -150,9 +150,9 @@ public class LockManager {
                 } else if (mode == LockMode.EXCLUSIVE) {
                     if (isOtherHasLock) {
                         // when 2 Txn race, one should abort, the other should wait and retry
-                        System.out.println("LockManager: upgrade failure, wait tid: " + tid + " waitqueue size: " + abortQueue.size());
+//                        System.out.println("LockManager: upgrade failure, wait tid: " + tid + " waitqueue size: " + abortQueue.size());
                         if (isOtherTryUpgrade) {
-                            System.out.println("LockManager: OtherTryUpgrade abort tid: " + tid);
+//                            System.out.println("LockManager: OtherTryUpgrade abort tid: " + tid);
                             throw new TransactionAbortedException();
                         } else {
                             formerRequest.tryUpgrade = true;
@@ -160,7 +160,7 @@ public class LockManager {
                         }
                     } else {
                         // upgrade the lock
-                        System.out.println("LockManager:   upgrade success tid: " + tid);
+//                        System.out.println("LockManager:   upgrade success tid: " + tid);
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
                         formerRequest.tryUpgrade = false;
                     }
@@ -181,14 +181,14 @@ public class LockManager {
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
-                    System.out.println(tid + " the other lock is exclusive, wait some time");
+//                    System.out.println(tid + " the other lock is exclusive, wait some time");
                     putWaitForMap(tid.getId(), other.tid.getId());
                     return false;
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
                     } else if (mode == LockMode.EXCLUSIVE) {
-                        System.out.println(tid + " the other lock is exclusive, wait some time");
+//                        System.out.println(tid + " the other lock is exclusive, wait some time");
                         putWaitForMap(tid.getId(), other.tid.getId());
                         return false;
                     }
@@ -199,10 +199,10 @@ public class LockManager {
     }
 
     public void unLockPage(TransactionId tid, PageId pageId) {
-        System.out.println("unLockPage tid: " + tid + " pageId: " + pageId);
+//        System.out.println("unLockPage tid: " + tid + " pageId: " + pageId);
         LockRequestQueue requestQueue = pageLockMap.get(pageId);
         LockRequest removeRequest = null;
-        System.out.println("unLockPage tid: " + "get requestQueue");
+//        System.out.println("unLockPage tid: " + "get requestQueue");
         for (LockRequest request : requestQueue.queue) {
             if (tid == request.tid) {
                 removeRequest = request;

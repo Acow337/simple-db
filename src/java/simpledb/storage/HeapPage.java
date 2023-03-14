@@ -267,9 +267,9 @@ public class HeapPage implements Page {
         if (getNumUnusedSlots() == tuples.length)
             throw new DbException("page is empty");
         int i = t.getRecordId().getTupleNumber();
-        System.out.println("Delete: origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString());
+//        System.out.println("Delete: origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString());
         if (!isSlotUsed(i)) {
-            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !isSlotUsed(i)");
+//            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !isSlotUsed(i)");
             return;
         }
 //        if (!tuples[i].equals(t)) {
@@ -311,7 +311,7 @@ public class HeapPage implements Page {
      * that did the dirtying
      */
     public void markDirty(boolean dirty, TransactionId tid) {
-        System.out.println("HeapPage: " + pid + " get dirty");
+//        System.out.println("HeapPage: " + pid + " get dirty");
         isDirty = dirty;
         lastTid = isDirty ? tid : null;
     }

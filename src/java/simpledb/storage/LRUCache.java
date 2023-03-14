@@ -26,7 +26,7 @@ public class LRUCache<K, T> {
     private DLinkedNode head, tail;
 
     public LRUCache(int capacity) {
-        System.out.println("LRUCache capacity: " + capacity);
+//        System.out.println("LRUCache capacity: " + capacity);
 
         this.size = 0;
         this.capacity = capacity;
@@ -65,7 +65,7 @@ public class LRUCache<K, T> {
     }
 
     public Page get(PageId key) {
-        System.out.println("Get: " + key + " " + toString());
+//        System.out.println("Get: " + key + " " + toString());
         DLinkedNode node = cache.get(key);
         if (node == null) {
             return null;
@@ -80,11 +80,11 @@ public class LRUCache<K, T> {
 
     public synchronized Page put(PageId key, Page value) throws DbException {
         DLinkedNode node = cache.get(key);
-        System.out.println("put: " + key);
+//        System.out.println("put: " + key);
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
             if (size >= capacity) {
-                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
+//                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
                 DLinkedNode tail = removeTail();
                 DLinkedNode remove = cache.remove(tail.key);
                 --size;
@@ -118,14 +118,14 @@ public class LRUCache<K, T> {
     }
 
     private DLinkedNode removeTail() throws DbException {
-        System.out.println("removeTail :" + toString());
+//        System.out.println("removeTail :" + toString());
         DLinkedNode res = tail.prev;
         while (res.value != null && res.value.isDirty() != null) {
-            System.out.println(res.value.getId() + " is dirty, change to another one");
+//            System.out.println(res.value.getId() + " is dirty, change to another one");
             res = res.prev;
             if (res.value == null) throw new DbException("LRU error");
         }
-        System.out.println(res.value.getId() + " gonna be removed");
+//        System.out.println(res.value.getId() + " gonna be removed");
         removeNode(res);
         return res;
     }

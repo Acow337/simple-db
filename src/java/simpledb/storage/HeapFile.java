@@ -146,7 +146,7 @@ public class HeapFile implements DbFile {
                 pageNo++;
             } while (page.isFull());
         } else {
-            System.out.println("insert to catch");
+//            System.out.println("insert to catch");
         }
         // Try to get write lock
 
@@ -160,7 +160,7 @@ public class HeapFile implements DbFile {
 //        t.setRecordId(new RecordId(new HeapPageId(id, pageNo - 1), t.getRecordId().getTupleNumber()));
         page.insertTuple(t);
         page.markDirty(true, tid);
-        System.out.println("After insert: " + page.getUsedSlots());
+//        System.out.println("After insert: " + page.getUsedSlots());
         dirtyPages.add(page);
         return dirtyPages;
     }
@@ -171,7 +171,7 @@ public class HeapFile implements DbFile {
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
         page.deleteTuple(t);
         page.markDirty(true, tid);
-        System.out.println("After delete: " + page.getUsedSlots());
+//        System.out.println("After delete: " + page.getUsedSlots());
         dirtyPages.add(page);
         return dirtyPages;
     }
