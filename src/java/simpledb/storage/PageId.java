@@ -37,5 +37,8 @@ public interface PageId {
     boolean equals(Object o);
 
     int getPageNumber();
+
+     void setTableId(int tableId);
+
 }
 

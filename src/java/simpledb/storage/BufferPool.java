@@ -2,6 +2,7 @@ package simpledb.storage;
 
 import simpledb.Debug;
 import simpledb.common.*;
+import simpledb.index.BTreeLeafPage;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
@@ -280,12 +281,23 @@ public class BufferPool {
      * @param t       the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
-        System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString());
+        System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString() + " tableId: " + tableId);
+        System.out.println("Insert: tableId: " + t.getRecordId().getPageId().getTableId());
+
+        //TODO choose the right PageId type
+        t.getRecordId().getPageId().setTableId(tableId);
         if (t.getRecordId() != null) {
-            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-            p.insertTuple(t);
-            p.markDirty(true, tid);
-            return;
+            Page page = Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
+            if (page.getClass() == HeapPage.class) {
+                HeapPage p = (HeapPage) page;
+                p.insertTuple(t);
+                p.markDirty(true, tid);
+                return;
+            } else if (page.getClass() == BTreeLeafPage.class) {
+                BTreeLeafPage p = (BTreeLeafPage) page;
+                p.insertTuple(t);
+                p.markDirty(true,tid);
+            }
         }
         // if can't find the page, get page from disk
         Debug.printTxn(tid, "insert begin");

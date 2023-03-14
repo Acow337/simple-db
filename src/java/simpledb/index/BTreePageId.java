@@ -16,7 +16,8 @@ public class BTreePageId implements PageId {
     public final static int LEAF = 2;
     public final static int HEADER = 3;
 
-    private final int tableId;
+    //    private final int tableId;
+    private int tableId;
     private final int pgNo;
     private final int pgcateg;
 
@@ -58,7 +59,7 @@ public class BTreePageId implements PageId {
 
     /**
      * @return the page number in the table getTableId() associated with
-     *         this PageId
+     * this PageId
      */
     public int getPageNumber() {
         return pgNo;
@@ -73,8 +74,8 @@ public class BTreePageId implements PageId {
 
     /**
      * @return a hash code for this page, represented by the combination of
-     *         the table number, page number, and pgcateg (needed if a PageId is used as a
-     *         key in a hash table in the BufferPool, for example.)
+     * the table number, page number, and pgcateg (needed if a PageId is used as a
+     * key in a hash table in the BufferPool, for example.)
      * @see BufferPool
      */
     public int hashCode() {
@@ -86,7 +87,7 @@ public class BTreePageId implements PageId {
      *
      * @param o The object to compare against (must be a PageId)
      * @return true if the objects are equal (e.g., page numbers, table
-     *         ids and pgcateg are the same)
+     * ids and pgcateg are the same)
      */
     public boolean equals(Object o) {
         if (!(o instanceof BTreePageId))
@@ -117,6 +118,10 @@ public class BTreePageId implements PageId {
         data[2] = pgcateg;
 
         return data;
+    }
+
+    public void setTableId(int tableId) {
+        this.tableId = tableId;
     }
 
 }

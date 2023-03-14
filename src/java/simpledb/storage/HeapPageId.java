@@ -90,4 +90,9 @@ public class HeapPageId implements PageId {
                 ", pageNum=" + pageNum +
                 '}';
     }
+
+    public void setTableId(int tableId) {
+        this.tableId = tableId;
+    }
+
 }

@@ -135,29 +135,29 @@ if the corresponding leaf page is full.
 
 As described in the textbook, attempting to insert a tuple into a full leaf page
 should cause that page to split so that the tuples are evenly distributed
-between the two new pages. Each time a leaf page splits, a new entry
-corresponding to the first tuple in the second page will need to be added to the
-parent node. Occasionally, the internal node may also be full and unable to
+between the two new pages. **Each time a leaf page splits, a new entry**
+**corresponding to the first tuple in the second page will need to be added to the**
+**parent node.** Occasionally, the internal node may also be full and unable to
 accept new entries. In that case, the parent should split and add a new entry to
 its parent. This may cause recursive splits and ultimately the creation of a new
 root node.
 
 In this exercise you will implement `splitLeafPage()` and `splitInternalPage()`
-in `BTreeFile.java`. If the page being split is the root page, you will need to
-create a new internal node to become the new root page, and update the
-BTreeRootPtrPage. Otherwise, you will need to fetch the parent page with
+in `BTreeFile.java`. **If the page being split is the root page, you will need to**
+**create a new internal node to become the new root page, and update the**
+**BTreeRootPtrPage**. Otherwise, you will need to fetch the parent page with
 READ_WRITE permissions, recursively split it if necessary, and add a new entry.
 You will find the function `getParentWithEmptySlots()` extremely useful for
-handling these different cases.  In `splitLeafPage()` you should "copy" the key
-up to the parent page, while in `splitInternalPage()` you should "push" the key
-up to the parent page. See Figure 2 and review section 10.5 in the text book if
+handling these different cases.  **In `splitLeafPage()` you should "copy" the key**
+**up to the parent page, while in `splitInternalPage()` you should "push" the key**
+**up to the parent page.** See Figure 2 and review section 10.5 in the text book if
 this is confusing. Remember to update the parent pointers of the new pages as
-needed (for simplicity, we do not show parent pointers in the figures). When an
-internal node is split, you will need to update the parent pointers of all the
-children that were moved. You may find the function `updateParentPointers()`
+needed (for simplicity, we do not show parent pointers in the figures).** **When an**
+**internal node is split, you will need to update the parent pointers of all the**
+children that were moved.** You may find the function `updateParentPointers()`
 useful for this task. Additionally, remember to update the sibling pointers of
-any leaf pages that were split. Finally, return the page into which the new
-tuple or entry should be inserted, as indicated by the provided key field.
+any leaf pages that were split. **Finally, return the page into which the new**
+**tuple or entry should be inserted,** as indicated by the provided key field.
 (Hint: You do not need to worry about the fact that the provided key may
 actually fall in the exact center of the tuples/entries to be split.  You should
 ignore the key during the split, and only use it to determine which of the two
@@ -165,7 +165,6 @@ pages to return.)
 
 <p align="center"> <img width=500 src="lab5-splitting_leaf.png"><br> <img width=500
 src="lab5-splitting_internal.png"><br> <i>Figure 2: Splitting pages</i> </p>
-
 Whenever you create a new page, either because of splitting a page or creating a
 new root page, call `getEmptyPage()` to get the new page. This function is an
 abstraction which will allow us to reuse pages that have been deleted due to
@@ -199,9 +198,9 @@ pointers in the provided entry overlaps an existing child pointer on the page,
 and that inserting the entry at that location will keep the keys in sorted
 order.
 
-In both `splitLeafPage()` and `splitInternalPage()`, you will need to update the
-set of `dirtypages` with any newly created pages as well as any pages modified
-due to new pointers or new data. This is where `BTreeFile.getPage()` will come
+In both `splitLeafPage()` and `splitInternalPage()`, **you will need to update the**
+**set of `dirtypages` with any newly created pages as well as any pages modified**
+**due to new pointers or new data**. This is where `BTreeFile.getPage()` will come
 in handy.  Each time you fetch a page, `BTreeFile.getPage()` will check to see
 if the page is already stored in the local cache (`dirtypages`), and if it can't
 find the requested page there, it fetches it from the buffer pool.
