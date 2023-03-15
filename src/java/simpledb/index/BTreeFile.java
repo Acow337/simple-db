@@ -189,7 +189,7 @@ public class BTreeFile implements DbFile {
         BTreePage page = (BTreePage) Database.getBufferPool().getPage(tid, pid, perm);
         // TODO: some code goes here
         // if internalPage, find the proper child and then research
-        System.out.println("======find: " + pid);
+//        System.out.println("======find: " + pid);
 
         if (f == null) {
             if (page.getId().pgcateg() == BTreePageId.INTERNAL) {
@@ -270,6 +270,7 @@ public class BTreeFile implements DbFile {
      */
     public BTreeLeafPage splitLeafPage(TransactionId tid, Map<PageId, Page> dirtypages, BTreeLeafPage page, Field field)
             throws DbException, IOException, TransactionAbortedException {
+        // printTree
         // TODO: some code goes here
 
         // Split the leaf page by adding a new page on the right of the existing
@@ -531,6 +532,7 @@ public class BTreeFile implements DbFile {
         // and split the leaf page if there are no more slots available
         BTreeLeafPage leafPage = findLeafPage(tid, dirtypages, rootId, Permissions.READ_WRITE, t.getField(keyField));
         if (leafPage.getNumEmptySlots() == 0) {
+            System.out.println("BTreeFile: " + t.getRecordId().getPageId() + " split page");
             leafPage = splitLeafPage(tid, dirtypages, leafPage, t.getField(keyField));
         }
 
@@ -539,6 +541,82 @@ public class BTreeFile implements DbFile {
 
         return new ArrayList<>(dirtypages.values());
     }
+
+    //TODO a method to print the B+Tree
+    public void printTree() throws DbException, IOException, TransactionAbortedException {
+        Map<PageId, Page> dirtypages = new HashMap<>();
+        BTreeRootPtrPage rootPtr = (BTreeRootPtrPage) Database.getBufferPool().getPage(BTreeRootPtrPage.getId(tableid));
+        BTreePageId rootId = rootPtr.getRootId();
+        Page page = Database.getBufferPool().getPage(rootId);
+        System.out.println("=======print tree=======");
+        System.out.println("Get Class: " + page.getClass());
+        Deque<BTreeEntry> deque = new LinkedList<>();
+        BTreePageId preId = null;
+        if (page.getClass() == BTreeLeafPage.class) {
+            BTreeLeafPage leafPage = (BTreeLeafPage) page;
+            System.out.println(leafPage.pid);
+        } else if (page.getClass() == BTreeInternalPage.class) {
+            BTreeInternalPage internalPage = (BTreeInternalPage) page;
+            Iterator<BTreeEntry> iterator = internalPage.iterator();
+            StringBuilder sb = new StringBuilder();
+            int len = 0;
+            // init the deque
+            while (iterator.hasNext()) {
+                BTreeEntry entry = iterator.next();
+                deque.offer(entry);
+                len++;
+            }
+            // print the internal page
+            while (!deque.isEmpty()) {
+                Page p = Database.getBufferPool().getPage(deque.peek().getLeftChild());
+                // check if the next page is internal page
+                if (p.getClass() != BTreeInternalPage.class) {
+                    break;
+                }
+                for (int i = 0; i < len; i++) {
+                    BTreeEntry entry = deque.poll();
+                    sb.append(entry.toString() + " ");
+                    if (entry.getLeftChild() != null && entry.getLeftChild().equals(preId)) {
+                        addEntryToDeque(deque, entry.getLeftChild());
+                        preId = entry.getLeftChild();
+                    }
+                    if (entry.getRightChild() != null && entry.getRightChild().equals(preId)) {
+                        addEntryToDeque(deque, entry.getRightChild());
+                        preId = entry.getRightChild();
+                    }
+                }
+                len = deque.size();
+                System.out.println(sb);
+                sb = new StringBuilder();
+            }
+
+            // print the internal page
+            for (BTreeEntry entry : deque) {
+                sb.append(entry.toString());
+                sb.append(" ");
+            }
+            System.out.println(sb);
+            sb = new StringBuilder();
+
+            // print the leaf page
+            while (!deque.isEmpty()) {
+                BTreeEntry entry = deque.poll();
+                sb.append(entry.getLeftChild());
+                sb.append(entry.getRightChild());
+            }
+            System.out.println(sb);
+        }
+    }
+
+    private void addEntryToDeque(Deque<BTreeEntry> deque, BTreePageId pageId) throws DbException, IOException, TransactionAbortedException {
+        BTreeInternalPage internalPage = (BTreeInternalPage) Database.getBufferPool().getPage(pageId);
+        Iterator<BTreeEntry> iterator = internalPage.iterator();
+        while (iterator.hasNext()) {
+            BTreeEntry entry = iterator.next();
+            deque.offer(entry);
+        }
+    }
+
 
     /**
      * Handle the case when a B+ tree page becomes less than half full due to deletions.

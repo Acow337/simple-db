@@ -276,7 +276,7 @@ public class BufferPool {
             } else if (page.getClass() == BTreeLeafPage.class) {
                 BTreeLeafPage p = (BTreeLeafPage) page;
                 p.insertTuple(t);
-                p.markDirty(true,tid);
+                p.markDirty(true, tid);
             }
         }
         // if can't find the page, get page from disk
