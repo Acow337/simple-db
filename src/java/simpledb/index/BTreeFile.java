@@ -86,6 +86,7 @@ public class BTreeFile implements DbFile {
      */
     public Page readPage(PageId pid) {
         BTreePageId id = (BTreePageId) pid;
+        System.out.println("filelength: " + f.length() + " ,pid: " + pid);
 
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
             if (id.pgcateg() == BTreePageId.ROOT_PTR) {
@@ -572,7 +573,7 @@ public class BTreeFile implements DbFile {
         BTreePageId rootId = rootPtr.getRootId();
         Page page = Database.getBufferPool().getPage(rootId);
         System.out.println("=======print tree=======");
-        System.out.println("Get Class: " + page.getClass());
+//        System.out.println("Get Class: " + page.getClass());
         Deque<BTreeEntry> deque = new LinkedList<>();
         BTreePageId preId = null;
         if (page.getClass() == BTreeLeafPage.class) {

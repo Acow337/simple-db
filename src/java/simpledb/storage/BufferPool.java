@@ -2,7 +2,9 @@ package simpledb.storage;
 
 import simpledb.Debug;
 import simpledb.common.*;
+import simpledb.index.BTreeFile;
 import simpledb.index.BTreeLeafPage;
+import simpledb.index.BTreePageId;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
@@ -178,7 +180,7 @@ public class BufferPool {
             try {
                 flushPage(pid);
             } catch (IOException e) {
-//                System.out.println("warning, IOException");
+                System.out.println("warning, IOException");
             }
         }
         Database.getLockManager().removeTxnMark(tid);
@@ -264,7 +266,13 @@ public class BufferPool {
 //        System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString() + " tableId: " + tableId);
 //        System.out.println("Insert: tableId: " + t.getRecordId().getPageId().getTableId());
 
-        //TODO choose the right PageId type
+        // if btree, find the right page to insert
+        if (t.getRecordId().getPageId().getClass() == BTreePageId.class) {
+            BTreeFile bTreeFile = (BTreeFile) Database.getCatalog().getDatabaseFile(tableId);
+            bTreeFile.insertTuple(tid, t);
+            return;
+        }
+
         t.getRecordId().getPageId().setTableId(tableId);
         if (t.getRecordId() != null) {
             Page page = Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);

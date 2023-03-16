@@ -150,6 +150,7 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 
 		// there should be 1 leaf page
 		assertEquals(1, onePageFile.numPages());
+		onePageFile.printTree();
 
 		// now insert a tuple
 		Database.getBufferPool().insertTuple(tid, onePageFile.getId(), BTreeUtility.getBTreeTuple(5000, 2));
