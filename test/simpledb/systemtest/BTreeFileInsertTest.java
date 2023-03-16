@@ -67,12 +67,12 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		}
 
 		// one more insert greater than 502 should cause page 2 to split
+        System.out.println("Test: one more insert greater than 502 should cause page 2 to split");
 		tup = BTreeUtility.getBTreeTuple(753, 2);
 		empty.insertTuple(tid, tup);
 
-		// print
+		System.out.println("test pages num");
 		empty.printTree();
-
 		assertEquals(4, empty.numPages());
 
 		// now make sure the records are sorted on the key field
