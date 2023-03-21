@@ -108,7 +108,7 @@ public class BufferPool {
         Page remove = null;
 //        System.out.println("BufferPool: " + LRUCache);
         if (page == null) {
-            System.out.println("BufferPool From Disk get page: " + pid + " perm: " + perm + " tid: " + tid);
+//            System.out.println("BufferPool From Disk get page: " + pid + " perm: " + perm + " tid: " + tid);
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             // add the Page to Map
             remove = LRUCache.put(page.getId(), page);

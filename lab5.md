@@ -183,8 +183,8 @@ As mentioned above, the internal page iterators use the interface defined in
 recordId, which identifies the location of the key and child pointers on the
 underlying page.  We think working with one entry at a time is a natural way to
 interact with internal pages, but it is important to keep in mind that the
-underlying page does not actually store a list of entries, but stores ordered
-lists of *m* keys and *m*+1 child pointers.  Since the `BTreeEntry` is just an
+underlying page does not actually store a list of entries, but **stores ordered**
+**lists of *m* keys and *m*+1 child pointers**.  Since the `BTreeEntry` is just an
 interface and not an object actually stored on the page, updating the fields of
 `BTreeEntry` will not modify the underlying page.  In order to change the data
 on the page, you need to call `BTreeInternalPage.updateEntry()`.  Furthermore,

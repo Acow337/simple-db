@@ -253,10 +253,17 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 
 		// there should be 250 leaf pages + 3 internal nodes
 		assertEquals(253, bigFile.numPages());
+		System.out.println("======bigFile====");
+		bigFile.printTree();
 
 		// now insert some random tuples and make sure we can find them
+        System.out.println("Test: now insert some random tuples and make sure we can find them");
 		Random rand = new Random();
 		for(int i = 0; i < 100; i++) {
+
+			bigFile.printTree();
+
+            System.out.println("Test: "+i+" ========insert=========");
 			int item = rand.nextInt(BTreeUtility.MAX_RAND_VALUE);
 			Tuple t = BTreeUtility.getBTreeTuple(item, 2);
 			Database.getBufferPool().insertTuple(tid, bigFile.getId(), t);
@@ -276,6 +283,7 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		}
 
 		// now make sure we have 31100 records and they are all in sorted order
+		System.out.println("Test: now make sure we have 31100 records and they are all in sorted order");
 		DbFileIterator fit = bigFile.iterator(tid);
 		int count = 0;
 		Tuple prev = null;

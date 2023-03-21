@@ -483,10 +483,14 @@ public class BTreeInternalPage extends BTreePage {
         if (emptySlot == -1)
             throw new DbException("called insertEntry on page with no empty slots.");
 
+        StringBuilder sb = new StringBuilder();
+
         // find the child pointer matching the left or right child in this entry
         int lessOrEqKey = -1;
         for (int i = 0; i < numSlots; i++) {
             if (isSlotUsed(i)) {
+                sb.append(children[i]);
+                sb.append(" ");
                 if (children[i] == e.getLeftChild().getPageNumber() || children[i] == e.getRightChild().getPageNumber()) {
                     if (i > 0 && keys[i].compare(Op.GREATER_THAN, e.getKey())) {
                         throw new DbException("attempt to insert invalid entry with left child " +
@@ -514,6 +518,8 @@ public class BTreeInternalPage extends BTreePage {
                 }
             }
         }
+//        System.out.println(sb);
+        sb = new StringBuilder();
 
         if (lessOrEqKey == -1) {
             throw new DbException("attempt to insert invalid entry with left child " +
@@ -605,7 +611,7 @@ public class BTreeInternalPage extends BTreePage {
 
     /**
      * @return an iterator over all entries on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     *         (note that this iterator shouldn't return entries in empty slots!)
+     * (note that this iterator shouldn't return entries in empty slots!)
      */
     public Iterator<BTreeEntry> iterator() {
         return new BTreeInternalPageIterator(this);
@@ -613,7 +619,7 @@ public class BTreeInternalPage extends BTreePage {
 
     /**
      * @return a reverse iterator over all entries on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     *         (note that this iterator shouldn't return entries in empty slots!)
+     * (note that this iterator shouldn't return entries in empty slots!)
      */
     public Iterator<BTreeEntry> reverseIterator() {
         return new BTreeInternalPageReverseIterator(this);
