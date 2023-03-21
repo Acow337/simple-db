@@ -205,6 +205,9 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		BTreeInternalPage root = (BTreeInternalPage) Database.getBufferPool().getPage(tid, rootId, Permissions.READ_ONLY);
 		assertEquals(502, root.getNumEmptySlots());
 
+		//Test
+		System.out.println("Test: "+root.getParentId());
+
 		// each child should have half of the entries
 		Iterator<BTreeEntry> it = root.iterator();
 		assertTrue(it.hasNext());
@@ -217,7 +220,9 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		// now insert some random tuples and make sure we can find them
 		Random rand = new Random();
 		for(int i = 0; i < 100; i++) {
+
 			int item = rand.nextInt(BTreeUtility.MAX_RAND_VALUE);
+			System.out.println("Test: insert: "+item);
 			Tuple t = BTreeUtility.getBTreeTuple(item, 2);
 			Database.getBufferPool().insertTuple(tid, bigFile.getId(), t);
 
@@ -232,6 +237,9 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 				}
 			}
 			fit.close();
+			System.out.println("========"+i+"========");
+			bigFile.printTree();
+			System.out.println("==================");
 			assertTrue(found);
 		}
 	}

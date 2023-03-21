@@ -263,8 +263,6 @@ public class BufferPool {
      * @param t       the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
-//        System.out.println("Insert: tid: " + tid + " tuple: " + t.toValueString() + " tableId: " + tableId);
-//        System.out.println("Insert: tableId: " + t.getRecordId().getPageId().getTableId());
 
         // if btree, find the right page to insert
         if (t.getRecordId().getPageId().getClass() == BTreePageId.class) {

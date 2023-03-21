@@ -116,8 +116,6 @@ public class BTreeFile implements DbFile {
      */
     public Page readPage(PageId pid) {
         BTreePageId id = (BTreePageId) pid;
-//        System.out.println("filelength: " + f.length() + " ,pid: " + pid);
-
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
             if (id.pgcateg() == BTreePageId.ROOT_PTR) {
                 byte[] pageBuf = new byte[BTreeRootPtrPage.getPageSize()];
@@ -219,8 +217,6 @@ public class BTreeFile implements DbFile {
 
         BTreePage page = (BTreePage) Database.getBufferPool().getPage(tid, pid, perm);
         // TODO: some code goes here
-        // if internalPage, find the proper child and then research
-//        System.out.println("======find: " + pid);
 
         if (f == null) {
             if (page.getId().pgcateg() == BTreePageId.INTERNAL) {
@@ -301,19 +297,19 @@ public class BTreeFile implements DbFile {
      */
     public BTreeLeafPage splitLeafPage(TransactionId tid, Map<PageId, Page> dirtypages, BTreeLeafPage page, Field field)
             throws DbException, IOException, TransactionAbortedException {
-        // printTree
-        // TODO: some code goes here
-//        printTree();
-
         // Split the leaf page by adding a new page on the right of the existing
         // page and moving half of the tuples to the new page.  Copy the middle key up
         // into the parent page, and recursively split the parent as needed to accommodate
         // the new entry.  getParentWithEmtpySlots() will be useful here.  Don't forget to update
         // the sibling pointers of all the affected leaf pages.  Return the page into which a
         // tuple with the given key field should be inserted.
-
         BTreeLeafPage newPage = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
         System.out.println("BTreeFile: splitLeafPage: " + page.pid + " newPage: " + newPage.pid);
+
+        if (page.pid.pgcateg() == BTreePageId.ROOT_PTR) {
+            System.out.println("ROOT: " + page.pid);
+        }
+
         Field midKey = null;
         Iterator<Tuple> iterator = page.iterator();
         int num = page.getNumTuples();
@@ -346,10 +342,6 @@ public class BTreeFile implements DbFile {
 
         // Copy the middle key up into the parent page    getParentWithEmtpySlots() will be useful here.
         BTreeInternalPage parentPage = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), midKey);
-//        System.out.println("BTreeFile: parentID: " + parentPage.getParentId());
-
-        // update parentId
-//        System.out.println("BTreeFile: update parentId");
         page.setParentId(parentPage.getId());
         newPage.setParentId(parentPage.getId());
 
@@ -360,6 +352,11 @@ public class BTreeFile implements DbFile {
         parentPage.insertEntry(newEntry);
         System.out.println("after insert");
         printPageMaxMin(parentPage);
+
+        System.out.println("parentId: " + page.getParentId());
+        if (page.getParentId().pgcateg() == BTreePageId.ROOT_PTR) {
+            System.out.println("ROOT: " + page.pid);
+        }
 
         // Return the page into which a tuple with the given key field should be inserted.
         return midKey.compare(Op.LESS_THAN_OR_EQ, field) ? newPage : page;
@@ -399,7 +396,6 @@ public class BTreeFile implements DbFile {
         // will be useful here.  Return the page into which an entry with the given key field
         // should be inserted.
         System.out.println("BTreeFile: splitInternalPage: " + page.getId());
-//        printTree();
 
         BTreeInternalPage newPage = (BTreeInternalPage) getEmptyPage(tid, dirtypages, BTreePageId.INTERNAL);
         int i = 0;
@@ -431,14 +427,19 @@ public class BTreeFile implements DbFile {
         // Don't forget to update
         // the parent pointers of all the children moving to the new page.  updateParentPointers()
         // will be useful here.
-        updateParentPointers(tid,dirtypages,page);
-        updateParentPointers(tid,dirtypages,newPage);
+        updateParentPointers(tid, dirtypages, page);
+        updateParentPointers(tid, dirtypages, newPage);
 
         System.out.println("after insert");
         printPageMaxMin(parentPage);
 
         // Don't forget to update the parent pointers of all the children moving to the new page.
         updateParentPointers(tid, dirtypages, page);
+
+        System.out.println("parentId: " + page.getParentId());
+        if (page.getParentId().pgcateg() == BTreePageId.ROOT_PTR) {
+            System.out.println("ROOT: " + page.pid);
+        }
 
         return midEntry.getKey().compare(Op.LESS_THAN_OR_EQ, field) ? newPage : page;
     }
