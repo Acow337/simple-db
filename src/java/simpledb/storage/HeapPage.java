@@ -272,10 +272,10 @@ public class HeapPage implements Page {
 //            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !isSlotUsed(i)");
             return;
         }
-//        if (!tuples[i].equals(t)) {
-//            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !tuples[i].equals(t)");
-//            return;
-//        }
+        if (!tuples[i].equals(t)) {
+            System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !tuples[i].equals(t)");
+            throw new DbException("");
+        }
         int a = i / 8;
         int b = i % 8;
         header[a] = (byte) (header[a] & (~(0x1 << b)));
