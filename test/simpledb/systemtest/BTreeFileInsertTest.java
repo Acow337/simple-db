@@ -189,13 +189,30 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		Database.resetBufferPool(500);
 
 		// there should be 504 leaf pages + 1 internal node
+		System.out.println("Test: there should be 504 leaf pages + 1 internal node");
 		assertEquals(505, bigFile.numPages());
+		bigFile.printTree();
+
+		// Get the rootId
+//		BTreePageId rootPtrPid = new BTreePageId(bigFile.getId(), 0, BTreePageId.ROOT_PTR);
+//		BTreeRootPtrPage rootPtr = (BTreeRootPtrPage) Database.getBufferPool().getPage(tid, rootPtrPid, Permissions.READ_ONLY);
+//		BTreePageId rootId = rootPtr.getRootId();
+//		System.out.println("rootId:"+rootId);
 
 		// now insert a tuple
+		System.out.println("Test: now insert a tuple");
 		Database.getBufferPool().insertTuple(tid, bigFile.getId(), BTreeUtility.getBTreeTuple(10, 2));
 
 		// there should now be 505 leaf pages + 3 internal nodes
+		System.out.println("Test: there should now be 505 leaf pages + 3 internal nodes");
 		assertEquals(508, bigFile.numPages());
+		bigFile.printTree();
+
+		// Get the rootId
+//		BTreePageId rootPtrPid = new BTreePageId(bigFile.getId(), 0, BTreePageId.ROOT_PTR);
+//		BTreeRootPtrPage rootPtr = (BTreeRootPtrPage) Database.getBufferPool().getPage(tid, rootPtrPid, Permissions.READ_ONLY);
+//		BTreePageId rootId = rootPtr.getRootId();
+//		System.out.println("rootId:"+rootId);
 
 		// the root node should be an internal node and have 2 children (1 entry)
 		BTreePageId rootPtrPid = new BTreePageId(bigFile.getId(), 0, BTreePageId.ROOT_PTR);

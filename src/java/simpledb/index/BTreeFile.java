@@ -89,8 +89,12 @@ public class BTreeFile implements DbFile {
         System.out.println("first: " + first + " last: " + entry);
     }
 
-    private String getPageMaxMin(BTreePageId pageId) throws DbException {
+    private String getPageMaxMin(BTreePageId pageId) throws DbException{
+        if (true)
+            return "";
+
         BTreeLeafPage page = (BTreeLeafPage) Database.getBufferPool().getPage(pageId);
+//        BTreeLeafPage page=(BTreeLeafPage) Database.getBufferPool().getPage(null,pageId,Permissions.READ_ONLY);
         Iterator<Tuple> iterator = page.iterator();
         Integer max = null;
         Integer min = null;
@@ -321,12 +325,15 @@ public class BTreeFile implements DbFile {
             Tuple t = iterator.next();
             if (i == num / 2) midKey = t.getField(keyField);
             if (i >= num / 2) {
+//                System.out.println("move: " + t);
                 page.deleteTuple(t);
                 newPage.insertTuple(t);
                 c++;
             }
             i++;
         }
+//        System.out.println("moveNum: " + c + ", newPage: " + getPageMaxMin(newPage.getId()));
+//        System.out.println("moveNum: " + c + ", newPage: " + getPageMaxMin(newPage));
 
         // update the sibling pointers
         if (page.getRightSiblingId() == null) {
@@ -618,7 +625,7 @@ public class BTreeFile implements DbFile {
         BTreePageId rootId = rootPtr.getRootId();
         Page page = Database.getBufferPool().getPage(rootId);
         System.out.println("=======print tree=======");
-//        System.out.println("Get Class: " + page.getClass());
+        System.out.println("Get Class: " + page.getClass());
         Deque<BTreeEntry> deque = new LinkedList<>();
         BTreePageId preId = null;
         if (page.getClass() == BTreeLeafPage.class) {

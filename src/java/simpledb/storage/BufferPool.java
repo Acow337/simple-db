@@ -265,26 +265,31 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
 
         // if btree, find the right page to insert
-        if (t.getRecordId().getPageId().getClass() == BTreePageId.class) {
-            BTreeFile bTreeFile = (BTreeFile) Database.getCatalog().getDatabaseFile(tableId);
-            bTreeFile.insertTuple(tid, t);
-            return;
-        }
 
-        t.getRecordId().getPageId().setTableId(tableId);
-        if (t.getRecordId() != null) {
-            Page page = Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-            if (page.getClass() == HeapPage.class) {
-                HeapPage p = (HeapPage) page;
-                p.insertTuple(t);
-                p.markDirty(true, tid);
-                return;
-            } else if (page.getClass() == BTreeLeafPage.class) {
-                BTreeLeafPage p = (BTreeLeafPage) page;
-                p.insertTuple(t);
-                p.markDirty(true, tid);
-            }
-        }
+//        if (t.getRecordId() != null) {
+//            t.getRecordId().getPageId().setTableId(tableId);
+//        }
+//
+//        if (t.getRecordId() != null && t.getRecordId().getPageId().getClass() == BTreePageId.class) {
+//            BTreeFile bTreeFile = (BTreeFile) Database.getCatalog().getDatabaseFile(tableId);
+//            bTreeFile.insertTuple(tid, t);
+//            return;
+//        }
+//
+//        if (t.getRecordId() != null) {
+//            Page page = Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
+//            if (page.getClass() == HeapPage.class) {
+//                HeapPage p = (HeapPage) page;
+//                p.insertTuple(t);
+//                p.markDirty(true, tid);
+//                return;
+//            } else if (page.getClass() == BTreeLeafPage.class) {
+//                BTreeLeafPage p = (BTreeLeafPage) page;
+//                p.insertTuple(t);
+//                p.markDirty(true, tid);
+//            }
+//        }
+
         // if can't find the page, get page from disk
         Debug.printTxn(tid, "insert begin");
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
