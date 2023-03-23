@@ -139,7 +139,7 @@ public class SystemTestUtil {
             List<Integer> list = tupleToList(t);
             boolean isExpected = copy.remove(list);
             String s = isExpected ? "expected" : "not expected";
-            System.out.printf("scanned tuple: %s (%s)", t, s);
+//            System.out.printf("scanned tuple: %s (%s)", t, s);
             Debug.log("scanned tuple: %s (%s)", t, isExpected ? "expected" : "not expected");
             if (!isExpected) {
                 Assert.fail("expected tuples does not contain: " + t);

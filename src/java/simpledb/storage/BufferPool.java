@@ -31,7 +31,7 @@ public class BufferPool {
     private static int pageSize = DEFAULT_PAGE_SIZE;
 
     private List<Page> pages;
-    LRUCache<PageId, Page> LRUCache;
+    private LRUCache<PageId, Page> LRUCache;
 
     /**
      * Default number of pages passed to the constructor. This is used by
@@ -94,7 +94,7 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
-//        System.out.println("BufferPool get page: " + pid + " perm: " + perm + " tid: " + tid);
+        System.out.println("BufferPool get page: " + pid + " perm: " + perm + " tid: " + tid);
 //        System.out.println(LRUCache.toString());
         try {
             Database.getLockManager().acquireLock(tid, pid, perm);
@@ -132,7 +132,7 @@ public class BufferPool {
 
     // internal use, no lock
     public Page getPage(PageId pid) throws DbException {
-//        System.out.println("BufferPool get page: " + pid);
+        System.out.println("BufferPool get page: " + pid);
 //        System.out.println(LRUCache.toString());
         if (LRUCache.containsKey(pid)) {
 //            System.out.println("BufferPool: " + "get from catch, catchSize: " + LRUCache.getSize());
@@ -170,6 +170,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) {
+        System.out.println("transactionComplete");
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         if (markPages == null) {
             Database.getLockManager().removeTxnMark(tid);
@@ -220,7 +221,7 @@ public class BufferPool {
 
 
     public void transactionAbort(TransactionId tid) {
-//        System.out.println("Transaction: abort begin " + tid);
+        System.out.println("Transaction: abort begin " + tid);
         Set<PageId> markPages = Database.getLockManager().getMarkPages(tid);
         for (PageId pid : markPages) {
             unsafeReleasePage(tid, pid);
@@ -359,6 +360,7 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void removePage(PageId pid) {
+        System.out.println("removePage");
         LRUCache.remove(pid);
     }
 
@@ -368,7 +370,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-//        System.out.println("BufferPool: flush " + pid);
+        System.out.println("BufferPool: flush " + pid);
         Page p = LRUCache.get(pid);
         if (p == null) {
             return;
@@ -393,6 +395,9 @@ public class BufferPool {
         }
     }
 
+    public simpledb.storage.LRUCache<PageId, Page> getLRUCache() {
+        return LRUCache;
+    }
 
     /**
      * Discards a page from the buffer pool.

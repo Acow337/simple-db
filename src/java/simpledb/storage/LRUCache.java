@@ -27,7 +27,6 @@ public class LRUCache<K, T> {
 
     public LRUCache(int capacity) {
 //        System.out.println("LRUCache capacity: " + capacity);
-
         this.size = 0;
         this.capacity = capacity;
         head = new DLinkedNode();
@@ -41,6 +40,8 @@ public class LRUCache<K, T> {
     }
 
     public synchronized void remove(PageId key) {
+        System.out.println("LRUCache: remove: " + key);
+
         if (!cache.containsKey(key)) {
             return;
         }
@@ -79,6 +80,7 @@ public class LRUCache<K, T> {
     }
 
     public synchronized Page put(PageId key, Page value) throws DbException {
+        System.out.println("PUT: " + key);
         DLinkedNode node = cache.get(key);
 //        System.out.println("put: " + key);
         if (node == null) {
@@ -149,6 +151,7 @@ public class LRUCache<K, T> {
             }
             node = node.next;
         }
+        sb.append(String.format(" (size: %d, capacity: %d)", size, capacity));
         return sb.toString();
     }
 

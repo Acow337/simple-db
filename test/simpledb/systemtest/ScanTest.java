@@ -102,12 +102,16 @@ public class ScanTest extends SimpleDbTestBase {
         InstrumentedHeapFile table = new InstrumentedHeapFile(f, td);
         Database.getCatalog().addTable(table, SystemTestUtil.getUUID());
 
+        System.out.println(Database.getBufferPool().getLRUCache().toString());
+        System.out.println("Test: Scan the table once");
         // Scan the table once
         SystemTestUtil.matchTuples(table, tuples);
         assertEquals(PAGES, table.readCount);
         table.readCount = 0;
 
         // Scan the table again: all pages should be cached
+        System.out.println(Database.getBufferPool().getLRUCache().toString());
+        System.out.println("Test: Scan the table again: all pages should be cached");
         SystemTestUtil.matchTuples(table, tuples);
         assertEquals(0, table.readCount);
     }
