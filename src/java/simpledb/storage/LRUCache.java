@@ -91,17 +91,13 @@ public class LRUCache<K, T> {
                 DLinkedNode tail = removeTail();
                 remove = cache.remove(tail.key);
                 --size;
-                System.out.println("put key: " + key.getPageNumber());
-                addToHead(newNode);
-                cache.put(key, newNode);
-                ++size;
-                return remove.value;
             }
             System.out.println("put key: " + key.getPageNumber());
             addToHead(newNode);
             cache.put(key, newNode);
             ++size;
             System.out.println("after remove and add: " + this);
+            if (remove != null) return remove.value;
         } else {
             node.value = value;
             moveToHead(node);
