@@ -94,7 +94,7 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
-        System.out.println("BufferPool get page: " + pid + " perm: " + perm + " tid: " + tid);
+        System.out.println("BufferPool get page: " + pid.getPageNumber() + " perm: " + perm + " tid: " + tid);
 //        System.out.println(LRUCache.toString());
         try {
             Database.getLockManager().acquireLock(tid, pid, perm);
@@ -108,12 +108,19 @@ public class BufferPool {
         Page remove = null;
 //        System.out.println("BufferPool: " + LRUCache);
         if (page == null) {
-//            System.out.println("BufferPool From Disk get page: " + pid + " perm: " + perm + " tid: " + tid);
+            System.out.println("BufferPool: From Disk get page: " + pid + " perm: " + perm + " tid: " + tid);
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
             // add the Page to Map
             remove = LRUCache.put(page.getId(), page);
+            if (remove != null) {
+                try {
+                    flushPage(remove);
+                } catch (IOException e) {
+                    throw new DbException("IO exception");
+                }
+            }
         } else {
-//            System.out.println("BufferPool From Catch get page: " + pid + " perm: " + perm + " tid: " + tid);
+            System.out.println("BufferPool: From Catch get page: " + pid + " perm: " + perm + " tid: " + tid);
         }
 
         // mark the page if it is dirty by the perm
@@ -132,7 +139,7 @@ public class BufferPool {
 
     // internal use, no lock
     public Page getPage(PageId pid) throws DbException {
-        System.out.println("BufferPool get page: " + pid);
+//        System.out.println("BufferPool get page: " + pid);
 //        System.out.println(LRUCache.toString());
         if (LRUCache.containsKey(pid)) {
 //            System.out.println("BufferPool: " + "get from catch, catchSize: " + LRUCache.getSize());
@@ -295,7 +302,10 @@ public class BufferPool {
         Debug.printTxn(tid, "insert begin");
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for (Page page : modifiedPages) {
-            LRUCache.put(page.getId(), page);
+            Page remove = LRUCache.put(page.getId(), page);
+            if (remove != null) {
+                flushPage(remove);
+            }
         }
     }
 
@@ -326,7 +336,10 @@ public class BufferPool {
         // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         for (Page page : modifiedPages) {
-            LRUCache.put(page.getId(), page);
+            Page remove = LRUCache.put(page.getId(), page);
+            if (remove != null) {
+                flushPage(remove);
+            }
         }
     }
 
@@ -360,7 +373,7 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void removePage(PageId pid) {
-        System.out.println("removePage");
+//        System.out.println("removePage");
         LRUCache.remove(pid);
     }
 
@@ -370,7 +383,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        System.out.println("BufferPool: flush " + pid);
+//        System.out.println("BufferPool: flush " + pid);
         Page p = LRUCache.get(pid);
         if (p == null) {
             return;
@@ -380,7 +393,7 @@ public class BufferPool {
     }
 
     private synchronized void flushPage(Page p) throws IOException {
-//        System.out.println("BufferPool: flush " + p.getId());
+        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
         Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
         LRUCache.remove(p.getId());
     }

@@ -246,17 +246,16 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 			IndexPredicate ipred = new IndexPredicate(Op.EQUALS, t.getField(0));
 			DbFileIterator fit = bigFile.indexIterator(tid, ipred);
 			fit.open();
+			System.out.println(Database.getBufferPool().getLRUCache());
 			boolean found = false;
 			while(fit.hasNext()) {
 				if(fit.next().equals(t)) {
+					System.out.println("find it: "+((IntField)t.getField(bigFile.keyField())).getValue());
 					found = true;
 					break;
 				}
 			}
 			fit.close();
-			System.out.println("========"+i+"========");
-			bigFile.printTree();
-			System.out.println("==================");
 			assertTrue(found);
 		}
 	}

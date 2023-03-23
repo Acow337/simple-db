@@ -296,6 +296,7 @@ public class BTreeLeafPage extends BTreePage {
             throw new DbException("tried to delete null tuple.");
         markSlotUsed(rid.getTupleNumber(), false);
         t.setRecordId(null);
+//        System.out.println("DeleteTuple: " + ((IntField) t.getField(keyField)).getValue() + " ,page: " + pid);
     }
 
     /**
@@ -357,6 +358,8 @@ public class BTreeLeafPage extends BTreePage {
         RecordId rid = new RecordId(pid, goodSlot);
         t.setRecordId(rid);
         tuples[goodSlot] = t;
+
+//        System.out.println("InsertTuple success: " + ((IntField) t.getField(keyField)).getValue() + " ,page: " + pid);
     }
 
     /**
@@ -480,7 +483,7 @@ public class BTreeLeafPage extends BTreePage {
 
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     *         (note that this iterator shouldn't return tuples in empty slots!)
+     * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
         return new BTreeLeafPageIterator(this);
@@ -488,7 +491,7 @@ public class BTreeLeafPage extends BTreePage {
 
     /**
      * @return a reverse iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     *         (note that this iterator shouldn't return tuples in empty slots!)
+     * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> reverseIterator() {
         return new BTreeLeafPageReverseIterator(this);

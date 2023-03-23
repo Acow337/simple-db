@@ -89,9 +89,9 @@ public class BTreeFile implements DbFile {
         System.out.println("first: " + first + " last: " + entry);
     }
 
-    private String getPageMaxMin(BTreePageId pageId) throws DbException{
-        if (true)
-            return "";
+    private String getPageMaxMin(BTreePageId pageId) throws DbException {
+//        if (true)
+//            return "";
 
         BTreeLeafPage page = (BTreeLeafPage) Database.getBufferPool().getPage(pageId);
 //        BTreeLeafPage page=(BTreeLeafPage) Database.getBufferPool().getPage(null,pageId,Permissions.READ_ONLY);
@@ -323,17 +323,17 @@ public class BTreeFile implements DbFile {
         int c = 0;
         while (iterator.hasNext()) {
             Tuple t = iterator.next();
+            System.out.println("iterator: " + ((IntField) t.getField(keyField)).getValue() + " page: " + page.pid);
             if (i == num / 2) midKey = t.getField(keyField);
             if (i >= num / 2) {
-//                System.out.println("move: " + t);
+//                System.out.println("move: " + ((IntField)t.getField(keyField)).getValue());
                 page.deleteTuple(t);
                 newPage.insertTuple(t);
                 c++;
             }
             i++;
         }
-//        System.out.println("moveNum: " + c + ", newPage: " + getPageMaxMin(newPage.getId()));
-//        System.out.println("moveNum: " + c + ", newPage: " + getPageMaxMin(newPage));
+        System.out.println("moveNum: " + c + ", newPage: " + getPageMaxMin(newPage.getId()));
 
         // update the sibling pointers
         if (page.getRightSiblingId() == null) {
@@ -354,7 +354,7 @@ public class BTreeFile implements DbFile {
 
         // insert the middle key to parent
         BTreeEntry newEntry = new BTreeEntry(midKey, page.pid, newPage.pid);
-        System.out.println("BTreeFile: leaf: insert to parent," + " entry: " + newEntry);
+        System.out.println("BTreeFile: leaf: insert to parent, entry: " + newEntry);
         printPageMaxMin(parentPage);
         parentPage.insertEntry(newEntry);
         System.out.println("after insert");
@@ -364,6 +364,8 @@ public class BTreeFile implements DbFile {
         if (page.getParentId().pgcateg() == BTreePageId.ROOT_PTR) {
             System.out.println("ROOT: " + page.pid);
         }
+
+        System.out.println("insert to: " + (midKey.compare(Op.LESS_THAN_OR_EQ, field) ? newPage.pid : page.pid));
 
         // Return the page into which a tuple with the given key field should be inserted.
         return midKey.compare(Op.LESS_THAN_OR_EQ, field) ? newPage : page;
@@ -620,6 +622,10 @@ public class BTreeFile implements DbFile {
 
     //TODO a method to print the B+Tree
     public void printTree() throws DbException, IOException, TransactionAbortedException {
+        if (true) {
+            return;
+        }
+
         Map<PageId, Page> dirtypages = new HashMap<>();
         BTreeRootPtrPage rootPtr = (BTreeRootPtrPage) Database.getBufferPool().getPage(BTreeRootPtrPage.getId(tableid));
         BTreePageId rootId = rootPtr.getRootId();
@@ -1420,6 +1426,7 @@ class BTreeSearchIterator extends AbstractDbFileIterator {
             while (it.hasNext()) {
                 Tuple t = it.next();
                 if (t.getField(f.keyField()).compare(ipred.getOp(), ipred.getField())) {
+                    System.out.println("BTreeSearch: read: " + ((IntField) t.getField(f.keyField())).getValue() + " , page: " + curp.pid);
                     return t;
                 } else if (ipred.getOp() == Op.LESS_THAN || ipred.getOp() == Op.LESS_THAN_OR_EQ) {
                     // if the predicate was not satisfied and the operation is less than, we have
@@ -1438,6 +1445,7 @@ class BTreeSearchIterator extends AbstractDbFileIterator {
             if (nextp == null) {
                 return null;
             } else {
+                System.out.println("BTreeSearch: readPage: " + nextp);
                 curp = (BTreeLeafPage) Database.getBufferPool().getPage(tid,
                         nextp, Permissions.READ_ONLY);
                 it = curp.iterator();

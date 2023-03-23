@@ -40,7 +40,7 @@ public class LRUCache<K, T> {
     }
 
     public synchronized void remove(PageId key) {
-        System.out.println("LRUCache: remove: " + key);
+        System.out.println("LRUCache: remove: " + key.getPageNumber());
 
         if (!cache.containsKey(key)) {
             return;
@@ -80,21 +80,28 @@ public class LRUCache<K, T> {
     }
 
     public synchronized Page put(PageId key, Page value) throws DbException {
-        System.out.println("PUT: " + key);
+//        System.out.println("PUT: " + key);
         DLinkedNode node = cache.get(key);
 //        System.out.println("put: " + key);
+        DLinkedNode remove = null;
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
             if (size >= capacity) {
-//                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
+                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
                 DLinkedNode tail = removeTail();
-                DLinkedNode remove = cache.remove(tail.key);
+                remove = cache.remove(tail.key);
                 --size;
+                System.out.println("put key: " + key.getPageNumber());
+                addToHead(newNode);
+                cache.put(key, newNode);
+                ++size;
                 return remove.value;
             }
+            System.out.println("put key: " + key.getPageNumber());
             addToHead(newNode);
             cache.put(key, newNode);
             ++size;
+            System.out.println("after remove and add: " + this);
         } else {
             node.value = value;
             moveToHead(node);
@@ -127,7 +134,7 @@ public class LRUCache<K, T> {
             res = res.prev;
             if (res.value == null) throw new DbException("LRU error");
         }
-//        System.out.println(res.value.getId() + " gonna be removed");
+        System.out.println(res.value.getId().getPageNumber() + " gonna be removed");
         removeNode(res);
         return res;
     }
@@ -146,7 +153,7 @@ public class LRUCache<K, T> {
             } else if (node.next == null) {
                 sb.append("tail");
             } else {
-                sb.append(node.value.getId());
+                sb.append(node.value.getId().getPageNumber());
                 sb.append("->");
             }
             node = node.next;
