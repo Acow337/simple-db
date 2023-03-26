@@ -69,12 +69,21 @@ public class LockManager {
         condition = lock.newCondition();
     }
 
+    public void resetLockManager(){
+        pageLockMap = new ConcurrentHashMap<>();
+        waitsForMap = new ConcurrentHashMap<>();
+        txnMarkMap = new ConcurrentHashMap<>();
+        abortQueue = new ConcurrentLinkedQueue<>();
+        lock = new ReentrantLock();
+        condition = lock.newCondition();
+    }
+
     public void acquireLock(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException, TransactionAbortedException {
-//        System.out.println("Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
+        System.out.println("Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
         long begin = System.currentTimeMillis();
         try {
             while (!lockPage(tid, pageId, perm, 0)) {
-                if (System.currentTimeMillis() - begin > 1000) {
+                if (System.currentTimeMillis() - begin > 5000) {
                     throw new TransactionAbortedException();
                 }
                 Thread.sleep(100);
@@ -82,7 +91,7 @@ public class LockManager {
         } catch (InterruptedException e) {
             throw new TransactionAbortedException();
         }
-//        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
+        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
     }
 
     private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException, InterruptedException, TransactionAbortedException {
@@ -150,9 +159,9 @@ public class LockManager {
                 } else if (mode == LockMode.EXCLUSIVE) {
                     if (isOtherHasLock) {
                         // when 2 Txn race, one should abort, the other should wait and retry
-//                        System.out.println("LockManager: upgrade failure, wait tid: " + tid + " waitqueue size: " + abortQueue.size());
+                        System.out.println("LockManager: upgrade failure, wait tid: " + tid + " waitqueue size: " + abortQueue.size());
                         if (isOtherTryUpgrade) {
-//                            System.out.println("LockManager: OtherTryUpgrade abort tid: " + tid);
+                            System.out.println("LockManager: OtherTryUpgrade abort tid: " + tid);
                             throw new TransactionAbortedException();
                         } else {
                             formerRequest.tryUpgrade = true;
@@ -160,7 +169,7 @@ public class LockManager {
                         }
                     } else {
                         // upgrade the lock
-//                        System.out.println("LockManager:   upgrade success tid: " + tid);
+                        System.out.println("LockManager:   upgrade success tid: " + tid);
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
                         formerRequest.tryUpgrade = false;
                     }
@@ -181,14 +190,14 @@ public class LockManager {
             } else if (lockNum == 1) {
                 LockRequest other = requestQueue.queue.peek();
                 if (other.lockMode == LockMode.EXCLUSIVE) {
-//                    System.out.println(tid + " the other lock is exclusive, wait some time");
+                    System.out.println("LockManager: " + tid + " the other lock is exclusive, wait some time， otherLock is: " + other.tid + " ,page: " + pageId);
                     putWaitForMap(tid.getId(), other.tid.getId());
                     return false;
                 } else if (other.lockMode == LockMode.SHARED) {
                     if (mode == LockMode.SHARED) {
                         requestQueue.offer(newRequest);
                     } else if (mode == LockMode.EXCLUSIVE) {
-//                        System.out.println(tid + " the other lock is exclusive, wait some time");
+                        System.out.println("LockManager: " + tid + " the request is exclusive, the other is shared, wait some time， otherLock is: " + other.tid + " ,page: " + pageId);
                         putWaitForMap(tid.getId(), other.tid.getId());
                         return false;
                     }

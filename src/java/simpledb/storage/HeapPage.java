@@ -274,7 +274,7 @@ public class HeapPage implements Page {
         }
         if (!tuples[i].equals(t)) {
             System.out.println("origin tuple: " + tuples[i].toValueString() + " delete tuple: " + t.toValueString() + " !tuples[i].equals(t)");
-            throw new DbException("");
+//            throw new DbException("");
         }
         int a = i / 8;
         int b = i % 8;

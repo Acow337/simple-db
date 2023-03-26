@@ -94,7 +94,7 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
-        System.out.println("BufferPool get page: " + pid.getPageNumber() + " perm: " + perm + " tid: " + tid);
+//        System.out.println("BufferPool get page: " + pid.getPageNumber() + " perm: " + perm + " tid: " + tid);
 //        System.out.println(LRUCache.toString());
         try {
             Database.getLockManager().acquireLock(tid, pid, perm);
@@ -167,7 +167,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
-//        System.out.println("BufferPool: unsafeReleasePage " + pid);
+        System.out.println("BufferPool: unsafeReleasePage " + pid + ", tid:" + tid);
         Database.getLockManager().unLockPage(tid, pid);
     }
 
@@ -323,16 +323,19 @@ public class BufferPool {
      * @param t   the tuple to delete
      */
     public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
+        System.out.println("Delete: " + t.toValueString());
 //        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
 
-        if (t.getRecordId() != null) {
-            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-//            System.out.println("Before delete: " + p.getUsedSlots());
-            p.deleteTuple(t);
-            p.markDirty(true, tid);
-//            System.out.println("After delete: " + p.getUsedSlots());
-            return;
-        }
+//        if (t.getRecordId() != null) {
+//            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
+////            System.out.println("Before delete: " + p.getUsedSlots());
+//            p.deleteTuple(t);
+//            p.markDirty(true, tid);
+////            System.out.println("After delete: " + p.getUsedSlots());
+//            return;
+//        }
+
+
         // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         for (Page page : modifiedPages) {
@@ -349,7 +352,10 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
+        System.out.println("flushAllPages");
+        System.out.println(Database.getBufferPool().LRUCache);
         Iterator<Page> it = LRUCache.valueIterator();
+
         while (it.hasNext()) {
             Page p = it.next();
             if (p.isDirty() != null) {
@@ -361,6 +367,8 @@ public class BufferPool {
                 it.remove();
             }
         }
+        //TODO release all pages?
+        Database.getLockManager().resetLockManager();
     }
 
     /**

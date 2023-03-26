@@ -87,16 +87,16 @@ public class LRUCache<K, T> {
         if (node == null) {
             DLinkedNode newNode = new DLinkedNode(key, value);
             if (size >= capacity) {
-                System.out.printf("oversize: remove a node, capacity %d\n", capacity);
                 DLinkedNode tail = removeTail();
                 remove = cache.remove(tail.key);
+//                System.out.printf("oversize: remove a node, capacity %d %s \n ", capacity, remove.value.getId());
                 --size;
             }
-            System.out.println("put key: " + key.getPageNumber());
+//            System.out.println("put key: " + key.getPageNumber());
             addToHead(newNode);
             cache.put(key, newNode);
             ++size;
-            System.out.println("after remove and add: " + this);
+//            System.out.println("after remove and add: " + this);
             if (remove != null) return remove.value;
         } else {
             node.value = value;
@@ -130,7 +130,7 @@ public class LRUCache<K, T> {
             res = res.prev;
             if (res.value == null) throw new DbException("LRU error");
         }
-        System.out.println(res.value.getId().getPageNumber() + " gonna be removed");
+//        System.out.println(res.value.getId().getPageNumber() + " gonna be removed");
         removeNode(res);
         return res;
     }
@@ -150,6 +150,9 @@ public class LRUCache<K, T> {
                 sb.append("tail");
             } else {
                 sb.append(node.value.getId().getPageNumber());
+                if (node.value.isDirty() != null) {
+                    sb.append("(D)");
+                }
                 sb.append("->");
             }
             node = node.next;

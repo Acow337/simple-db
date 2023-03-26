@@ -47,6 +47,8 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 
 		// first make sure that item1 is not contained in our B+ tree
 		TransactionId tid = new TransactionId();
+		System.out.println("SetUp: "+tid);
+
 		DbFileIterator it = bf.indexIterator(tid, new IndexPredicate(Op.EQUALS, new IntField(item1)));
 		it.open();
 		List<Tuple> tuples = new ArrayList<>();
@@ -57,7 +59,7 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 			bp.deleteTuple(tid, t);
 		}
 
-		// this is the number of tuples we must insert to replace the deleted tuples 
+		// this is the number of tuples we must insert to replace the deleted tuples
 		// and cause the root node to split
 		count1 = tuples.size() + 1;
 
@@ -72,7 +74,7 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 			bp.deleteTuple(tid, t);
 		}
 
-		// this is the number of tuples we must insert to replace the deleted tuples 
+		// this is the number of tuples we must insert to replace the deleted tuples
 		// and cause the root node to split
 		count2 = tuples.size() + 1;
 
@@ -86,7 +88,7 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 	 * Helper method to clean up the syntax of starting a BTreeWriter thread.
 	 * The parameters pass through to the BTreeWriter constructor.
 	 */
-	public BTreeUtility.BTreeWriter startWriter(TransactionId tid, 
+	public BTreeUtility.BTreeWriter startWriter(TransactionId tid,
 			int item, int count) {
 
 		BTreeWriter bw = new BTreeWriter(tid, bf, item, count);
@@ -96,9 +98,9 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 
 	/**
 	 * Not-so-unit test to construct a deadlock situation.
-	 * 
+	 *
 	 * This test causes two different transactions to update two (probably) different leaf nodes
-	 * Each transaction can happily insert tuples until the page fills up, but then 
+	 * Each transaction can happily insert tuples until the page fills up, but then
 	 * it needs to obtain a write lock on the root node in order to split the page. This will cause
 	 * a deadlock situation.
 	 */
@@ -113,7 +115,7 @@ public class BTreeDeadlockTest extends SimpleDbTestBase {
 
 		// allow read locks to acquire
 		Thread.sleep(POLL_INTERVAL);
-		
+
 		BTreeWriter writer1 = startWriter(tid1, item1, count1);
 		BTreeWriter writer2 = startWriter(tid2, item2, count2);
 
