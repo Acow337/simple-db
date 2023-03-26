@@ -923,17 +923,48 @@ public class BTreeFile implements DbFile {
         // pointers of all children in the entries that were moved.
 
         // move the page of leftSibling to page
-        Iterator<BTreeEntry> iterator = leftSibling.reverseIterator();
-        BTreeEntry steal;
-        if (iterator.hasNext()) {
-            steal = iterator.next();
-        } else {
-            throw new DbException("leftSibling has no entry");
+        Iterator<BTreeEntry> leftSiblingIterator = leftSibling.reverseIterator();
+        Iterator<BTreeEntry> pageIterator = page.iterator();
+        BTreeEntry steal = null;
+        BTreeEntry pageLeftEntry = null;
+        BTreeEntry insert = null;
+        BTreeEntry newParentEntry = null;
+
+        while (leftSibling.getNumEntries() - page.getNumEntries() > 1) {
+            leftSiblingIterator = leftSibling.reverseIterator();
+            pageIterator = page.iterator();
+            if (leftSiblingIterator.hasNext() && pageIterator.hasNext()) {
+                steal = leftSiblingIterator.next();
+                pageLeftEntry = pageIterator.next();
+            } else {
+                throw new DbException("leftSibling or page has no entry");
+            }
+            System.out.println("before parentEntry: " + parentEntry);
+            leftSibling.deleteKeyAndRightChild(steal);
+            Field key = parentEntry.getKey();
+
+//            parentEntry.setKey(steal.getKey());
+            insert = new BTreeEntry(key, steal.getRightChild(), pageLeftEntry.getLeftChild());
+            System.out.println("steal: " + steal + " insert: " + insert + " pageLeftEntry: " + pageLeftEntry);
+            page.insertEntry(insert);
+            System.out.println("after parentEntry: " + parentEntry);
+            // update parent
+
+            // Be sure to update the parent pointers of all children in the entries that were moved.
+            BTreePage p = (BTreePage) Database.getBufferPool().getPage(tid, steal.getRightChild(), Permissions.READ_ONLY);
+            p.setParentId(page.getId());
+            System.out.println("dirtyPages Put: " + p.getId());
+            dirtypages.put(p.getId(), p);
         }
-        leftSibling.deleteKeyAndRightChild(steal);
-        page.insertEntry(steal);
+
         // update parent
-        parentEntry.setKey(steal.getKey());
+        newParentEntry = new BTreeEntry(steal.getKey(), leftSibling.pid, page.pid);
+        parent.deleteKeyAndRightChild(parentEntry);
+        parent.insertEntry(newParentEntry);
+
+//        parentEntry.setKey(steal.getKey());
+        System.out.println("After update parent: " + newParentEntry);
+
 
         // update dirtyPages
         dirtypages.put(page.getId(), page);
@@ -967,17 +998,48 @@ public class BTreeFile implements DbFile {
         // pointers of all children in the entries that were moved.
 
         // move the page of rightSibling to page
-        Iterator<BTreeEntry> iterator = rightSibling.iterator();
-        BTreeEntry steal;
-        if (iterator.hasNext()) {
-            steal = iterator.next();
-        } else {
-            throw new DbException("rightSibling has no entry");
+        Iterator<BTreeEntry> rightSiblingIterator;
+        Iterator<BTreeEntry> pageIterator;
+        BTreeEntry steal = null;
+        BTreeEntry pageRightEntry = null;
+        BTreeEntry insert = null;
+        BTreeEntry newParentEntry = null;
+
+        while (rightSibling.getNumEntries() - page.getNumEntries() > 1) {
+            rightSiblingIterator = rightSibling.iterator();
+            pageIterator = page.reverseIterator();
+            if (rightSiblingIterator.hasNext() && pageIterator.hasNext()) {
+                steal = rightSiblingIterator.next();
+                pageRightEntry = pageIterator.next();
+            } else {
+                throw new DbException("leftSibling or page has no entry");
+            }
+            System.out.println("before parentEntry: " + parentEntry);
+            rightSibling.deleteKeyAndLeftChild(steal);
+            Field key = parentEntry.getKey();
+
+//            parentEntry.setKey(steal.getKey());
+            insert = new BTreeEntry(key, pageRightEntry.getRightChild(),steal.getLeftChild());
+//            insert = new BTreeEntry(key, steal.getLeftChild(), pageRightEntry.getRightChild());
+            System.out.println("steal: " + steal + " insert: " + insert + " pageRightEntry: " + pageRightEntry);
+            page.insertEntry(insert);
+            System.out.println("after parentEntry: " + parentEntry);
+            // update parent
+
+            // Be sure to update the parent pointers of all children in the entries that were moved.
+            BTreePage p = (BTreePage) Database.getBufferPool().getPage(tid, steal.getLeftChild(), Permissions.READ_ONLY);
+            p.setParentId(page.getId());
+            System.out.println("dirtyPages Put: " + p.getId());
+            dirtypages.put(p.getId(), p);
         }
-        rightSibling.deleteKeyAndLeftChild(steal);
-        page.insertEntry(steal);
+
         // update parent
-        parentEntry.setKey(steal.getKey());
+        newParentEntry = new BTreeEntry(steal.getKey(), rightSibling.pid, page.pid);
+        parent.deleteKeyAndRightChild(parentEntry);
+        parent.insertEntry(newParentEntry);
+
+//        parentEntry.setKey(steal.getKey());
+        System.out.println("After update parent: " + newParentEntry);
 
         // update dirtyPages
         dirtypages.put(page.getId(), page);

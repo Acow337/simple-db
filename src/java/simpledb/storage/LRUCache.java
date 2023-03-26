@@ -40,7 +40,7 @@ public class LRUCache<K, T> {
     }
 
     public synchronized void remove(PageId key) {
-        System.out.println("LRUCache: remove: " + key.getPageNumber());
+//        System.out.println("LRUCache: remove: " + key.getPageNumber());
 
         if (!cache.containsKey(key)) {
             return;

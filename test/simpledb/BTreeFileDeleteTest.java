@@ -232,8 +232,16 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		// are the keys in the left page less than the keys in the right page?
 		assertTrue(sibling.reverseIterator().next().getKey().compare(Op.LESS_THAN_OR_EQ, 
 				page.iterator().next().getKey()));
-		
+
+		System.out.println("Test: parent: ");
+		Iterator<BTreeEntry> iterator = parent.iterator();
+		while (iterator.hasNext()){
+			System.out.println(iterator.next());
+		}
+
 		// is the parent key reasonable?
+		System.out.println("Test: is the parent key reasonable?");
+
 		assertTrue(parent.iterator().next().getKey().compare(Op.LESS_THAN_OR_EQ, page.iterator().next().getKey()));
 		assertTrue(parent.iterator().next().getKey().compare(Op.GREATER_THAN_OR_EQ, sibling.reverseIterator().next().getKey()));
 		
@@ -242,8 +250,10 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		BTreeEntry e = null;
 		int count = 0;
 		while(count < entriesToSteal) {
+			System.out.println("Test: "+count);
 			assertTrue(it.hasNext());
 			e = it.next();
+			System.out.println("Test: find :"+e.getLeftChild());
 			BTreePage p = (BTreePage) dirtypages.get(e.getLeftChild());
 			assertEquals(pageId, p.getParentId());
 			++count;
