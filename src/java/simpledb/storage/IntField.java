@@ -55,7 +55,7 @@ public class IntField implements Field {
     public boolean compare(Predicate.Op op, Field val) {
 
         IntField iVal = (IntField) val;
-        System.out.printf("Compare int %d %d\n", this.value, iVal.value);
+//        System.out.printf("Compare int %d %d\n", this.value, iVal.value);
 
         switch (op) {
             case EQUALS:

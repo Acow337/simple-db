@@ -1019,7 +1019,7 @@ public class BTreeFile implements DbFile {
             Field key = parentEntry.getKey();
 
 //            parentEntry.setKey(steal.getKey());
-            insert = new BTreeEntry(key, pageRightEntry.getRightChild(),steal.getLeftChild());
+            insert = new BTreeEntry(key, pageRightEntry.getRightChild(), steal.getLeftChild());
 //            insert = new BTreeEntry(key, steal.getLeftChild(), pageRightEntry.getRightChild());
             System.out.println("steal: " + steal + " insert: " + insert + " pageRightEntry: " + pageRightEntry);
             page.insertEntry(insert);
@@ -1074,6 +1074,33 @@ public class BTreeFile implements DbFile {
         // the sibling pointers, and make the right page available for reuse.
         // Delete the entry in the parent corresponding to the two pages that are merging -
         // deleteParentEntry() will be useful here
+
+        // Move all the tuples from the right page to the left page,
+        Iterator<Tuple> iterator = rightPage.iterator();
+        while (iterator.hasNext()) {
+            Tuple tuple = iterator.next();
+            rightPage.deleteTuple(tuple);
+            leftPage.insertTuple(tuple);
+        }
+
+        // update the sibling pointers,
+        leftPage.setRightSiblingId(rightPage.getRightSiblingId());
+        if (rightPage.getRightSiblingId() != null) {
+            BTreeLeafPage page = (BTreeLeafPage) Database.getBufferPool().getPage(tid, rightPage.getId(), Permissions.READ_ONLY);
+            page.setLeftSiblingId(leftPage.getId());
+        }
+
+        // make the right page available for reuse
+        setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
+
+        // Delete the entry in the parent corresponding to the two pages that are merging
+        deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
+
+        // update dirtyPages
+        dirtypages.put(leftPage.getId(), leftPage);
+        dirtypages.put(rightPage.getId(), rightPage);
+        dirtypages.put(parent.getId(), parent);
+
     }
 
     /**
