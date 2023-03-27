@@ -1133,6 +1133,40 @@ public class BTreeFile implements DbFile {
         // and make the right page available for reuse
         // Delete the entry in the parent corresponding to the two pages that are merging -
         // deleteParentEntry() will be useful here
+
+        // Move all the entries from the right page to the left page
+        Iterator<BTreeEntry> iterator = rightPage.iterator();
+        BTreeEntry rightEntry = leftPage.reverseIterator().next();
+        BTreeEntry leftEntry = rightPage.iterator().next();
+        BTreeEntry entry = null;
+
+        BTreeEntry insert = new BTreeEntry(parentEntry.getKey(), rightEntry.getRightChild(), leftEntry.getLeftChild());
+        leftPage.insertEntry(insert);
+        while (iterator.hasNext()) {
+            entry = iterator.next();
+            rightPage.deleteKeyAndRightChild(entry);
+            leftPage.insertEntry(entry);
+
+            BTreePage page = (BTreePage) Database.getBufferPool().getPage(tid, entry.getLeftChild(), Permissions.READ_ONLY);
+            page.setParentId(leftPage.getId());
+            dirtypages.put(page.getId(), page);
+        }
+        if (entry != null && entry.getRightChild() != null) {
+            BTreePage page = (BTreePage) Database.getBufferPool().getPage(tid, entry.getRightChild(), Permissions.READ_ONLY);
+            page.setParentId(leftPage.getId());
+            dirtypages.put(page.getId(), page);
+        }
+
+        // update the parent pointers of the children in the entries that were moved and make the right page available for reuse
+        setEmptyPage(tid, dirtypages, rightPage.getId().getPageNumber());
+
+        // Delete the entry in the parent corresponding to the two pages that are merging
+        deleteParentEntry(tid, dirtypages, leftPage, parent, parentEntry);
+
+        // update dirtyPages
+        dirtypages.put(leftPage.getId(), leftPage);
+        dirtypages.put(rightPage.getId(), rightPage);
+        dirtypages.put(parent.getId(), parent);
     }
 
     /**
