@@ -133,6 +133,8 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		assertTrue(sibling.getNumTuples() == totalTuples/2 || sibling.getNumTuples() == totalTuples/2 + 1);
 		assertTrue(page.reverseIterator().next().getField(keyField).compare(Op.LESS_THAN_OR_EQ, 
 				sibling.iterator().next().getField(keyField)));
+
+		BTreeChecker.checkRep(empty, tid, new HashMap<>(), true);
 	} 
 
 	@Test
@@ -258,6 +260,8 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 			assertEquals(pageId, p.getParentId());
 			++count;
 		}
+
+		BTreeChecker.checkRep(empty, tid, new HashMap<>(), true);
 	}
 
 	@Test

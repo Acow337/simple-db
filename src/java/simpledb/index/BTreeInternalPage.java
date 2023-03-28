@@ -37,6 +37,8 @@ public class BTreeInternalPage extends BTreePage {
             prev = f;
         }
 
+        if (upperBound != null && prev != null)
+            System.out.println("checkRep: prev: " + ((IntField) prev).getValue() + " upperBound: " + ((IntField) upperBound).getValue()+" pageId: "+this.getId().getPageNumber());
         assert null == upperBound || null == prev || (prev.compare(Op.LESS_THAN_OR_EQ, upperBound));
 
         assert !checkOccupancy || depth <= 0 || (getNumEntries() >= getMaxEntries() / 2);

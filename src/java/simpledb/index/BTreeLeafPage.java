@@ -35,6 +35,7 @@ public class BTreeLeafPage extends BTreePage {
             assert (t.getRecordId().getPageId().equals(this.getId()));
         }
 
+        System.out.println("checkRep: prev: "+prev+" upperBound: "+upperBound+" pageId: "+pid.getPageNumber());
         assert null == upperBound || null == prev || (prev.compare(Predicate.Op.LESS_THAN_OR_EQ, upperBound));
 
         assert !checkoccupancy || depth <= 0 || (getNumTuples() >= getMaxTuples() / 2);

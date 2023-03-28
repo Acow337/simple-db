@@ -120,7 +120,7 @@ public class BufferPool {
                 }
             }
         } else {
-            System.out.println("BufferPool: From Catch get page: " + pid + " perm: " + perm + " tid: " + tid);
+//            System.out.println("BufferPool: From Catch get page: " + pid + " perm: " + perm + " tid: " + tid);
         }
 
         // mark the page if it is dirty by the perm
@@ -167,7 +167,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void unsafeReleasePage(TransactionId tid, PageId pid) {
-        System.out.println("BufferPool: unsafeReleasePage " + pid + ", tid:" + tid);
+//        System.out.println("BufferPool: unsafeReleasePage " + pid + ", tid:" + tid);
         Database.getLockManager().unLockPage(tid, pid);
     }
 
@@ -323,7 +323,7 @@ public class BufferPool {
      * @param t   the tuple to delete
      */
     public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
-        System.out.println("Delete: " + t.toValueString());
+//        System.out.println("Delete: " + t.toValueString());
 //        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
 
 //        if (t.getRecordId() != null) {

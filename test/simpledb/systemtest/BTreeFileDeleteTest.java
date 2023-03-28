@@ -269,6 +269,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 				tid, BTreeRootPtrPage.getId(bigFile.getId()), Permissions.READ_ONLY);
 		BTreeInternalPage root = (BTreeInternalPage) Database.getBufferPool().getPage(
 				tid, rootPtr.getRootId(), Permissions.READ_ONLY);
+		System.out.println("Test: maxPageNum: "+root.getMaxEntries());
 		assertEquals(122, root.getNumEmptySlots());
 
 		BTreeEntry e = root.iterator().next();
@@ -277,6 +278,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		BTreeInternalPage rightChild = (BTreeInternalPage) Database.getBufferPool().getPage(
 				tid, e.getRightChild(), Permissions.READ_ONLY);
 
+		System.out.println("Test: Delete tuples causing leaf pages to merge until the first internal page gets to minimum occupancy");
 		// Delete tuples causing leaf pages to merge until the first internal page 
 		// gets to minimum occupancy
 		DbFileIterator it = bigFile.iterator(tid);
@@ -284,6 +286,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 		int count = 0;
 		Database.getBufferPool().deleteTuple(tid, it.next());
 		it.rewind();
+		BTreeChecker.checkRep(bigFile, tid, new HashMap<>(), true);
 		while(count < 62) {
 			assertEquals(count, leftChild.getNumEmptySlots());
 			for(int i = 0; i < 124; ++i) {
@@ -295,6 +298,7 @@ public class BTreeFileDeleteTest extends SimpleDbTestBase {
 
 		BTreeChecker.checkRep(bigFile, tid, new HashMap<>(), true);
 
+		System.out.println("Test: deleting a page of tuples should bring the internal page below minimum occupancy and cause the entries to be redistributed");
 		// deleting a page of tuples should bring the internal page below minimum 
 		// occupancy and cause the entries to be redistributed
 		assertEquals(62, leftChild.getNumEmptySlots());

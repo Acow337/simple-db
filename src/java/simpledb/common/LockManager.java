@@ -91,7 +91,7 @@ public class LockManager {
         } catch (InterruptedException e) {
             throw new TransactionAbortedException();
         }
-        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
+//        System.out.println("Txn id: " + tid + "get Lock:" + " pageId: " + pageId + " perm: " + perm);
     }
 
     private synchronized boolean lockPage(TransactionId tid, PageId pageId, Permissions perm, int retry) throws DeadlockException, InterruptedException, TransactionAbortedException {
@@ -169,7 +169,7 @@ public class LockManager {
                         }
                     } else {
                         // upgrade the lock
-                        System.out.println("LockManager:   upgrade success tid: " + tid);
+//                        System.out.println("LockManager:   upgrade success tid: " + tid);
                         formerRequest.lockMode = LockMode.EXCLUSIVE;
                         formerRequest.tryUpgrade = false;
                     }
