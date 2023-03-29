@@ -19,6 +19,16 @@ import java.util.concurrent.atomic.AtomicReference;
  * Provides a set of methods that can be used to access these variables from
  * anywhere.
  *
+ * STEAL: Whether the DBMS allows an uncommitted txn to
+ * overwrite the most recent committed value of an
+ * object in non-volatile storage.
+ *
+ * FORCE: Whether the DBMS requires that all updates made
+ * by a txn are reflected on non-volatile storage
+ * before the txn can commit.
+ *
+ * NOW: NO STEAL + FORCE (do not need undo and redo)
+ *
  * @Threadsafe
  */
 public class Database {
