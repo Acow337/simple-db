@@ -361,20 +361,12 @@ public class BufferPool {
         System.out.println("flushAllPages");
         System.out.println(Database.getBufferPool().LRUCache);
         Iterator<Page> it = LRUCache.valueIterator();
-
         while (it.hasNext()) {
             Page p = it.next();
-            if (p.isDirty() != null) {
-                TransactionId tid = p.isDirty();
-//                System.out.println("===flush=== tid: " + tid.toString() + " pageId: " + p.getId());
-                Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
-                // release the page
-                unsafeReleasePage(tid, p.getId());
-                it.remove();
-            }
+            flushPage(p);
+            // release the page
+            it.remove();
         }
-        //TODO release all pages?
-        Database.getLockManager().resetLockManager();
     }
 
     /**
@@ -387,7 +379,6 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void removePage(PageId pid) {
-//        System.out.println("removePage");
         LRUCache.remove(pid);
     }
 
@@ -402,6 +393,13 @@ public class BufferPool {
         if (p == null) {
             return;
         }
+        if (p.isDirty() != null) {
+            TransactionId dirtier = p.isDirty();
+            if (dirtier != null) {
+                Database.getLogFile().logWrite(dirtier, p.getBeforeImage(), p);
+                Database.getLogFile().force();
+            }
+        }
         Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
         LRUCache.remove(pid);
     }
@@ -411,12 +409,13 @@ public class BufferPool {
 
         // append an update record to the log, with
         // a before-image and after-image.
-        TransactionId dirtier = p.isDirty();
-        if (dirtier != null) {
-            Database.getLogFile().logWrite(dirtier, p.getBeforeImage(), p);
-            Database.getLogFile().force();
+        if (p.isDirty() != null) {
+            TransactionId dirtier = p.isDirty();
+            if (dirtier != null) {
+                Database.getLogFile().logWrite(dirtier, p.getBeforeImage(), p);
+                Database.getLogFile().force();
+            }
         }
-
         Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
         LRUCache.remove(p.getId());
     }

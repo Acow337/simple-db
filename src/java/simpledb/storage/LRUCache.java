@@ -125,15 +125,14 @@ public class LRUCache<K, T> {
     private DLinkedNode removeTail() throws DbException {
 //        System.out.println("removeTail :" + toString());
         DLinkedNode res = tail.prev;
-        while (res.value != null && res.value.isDirty() != null) {
-//            System.out.println(res.value.getId() + " is dirty, change to another one");
-            res = res.prev;
-            if (res.value == null) throw new DbException("LRU error");
-        }
-//        System.out.println(res.value.getId().getPageNumber() + " gonna be removed");
+//        while (res.value != null && res.value.isDirty() != null) {
+//            res = res.prev;
+//            if (res.value == null) throw new DbException("LRU error");
+//        }
         removeNode(res);
         return res;
     }
+
 
     public int getSize() {
         return size;
