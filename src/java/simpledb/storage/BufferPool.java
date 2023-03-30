@@ -186,9 +186,15 @@ public class BufferPool {
         for (PageId pid : markPages) {
             unsafeReleasePage(tid, pid);
             try {
-                flushPage(pid);
+                Page page = Database.getBufferPool().getPage(pid);
+                flushPage(page);
+                // use current page contents as the before-image
+                // for the next transaction that modifies this page.
+                page.setBeforeImage();
             } catch (IOException e) {
                 System.out.println("warning, IOException");
+            } catch (DbException e) {
+                System.out.println("warning, DbException");
             }
         }
         Database.getLockManager().removeTxnMark(tid);
@@ -402,6 +408,15 @@ public class BufferPool {
 
     private synchronized void flushPage(Page p) throws IOException {
 //        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
+
+        // append an update record to the log, with
+        // a before-image and after-image.
+        TransactionId dirtier = p.isDirty();
+        if (dirtier != null) {
+            Database.getLogFile().logWrite(dirtier, p.getBeforeImage(), p);
+            Database.getLogFile().force();
+        }
+
         Database.getCatalog().getDatabaseFile(p.getId().getTableId()).writePage(p);
         LRUCache.remove(p.getId());
     }
