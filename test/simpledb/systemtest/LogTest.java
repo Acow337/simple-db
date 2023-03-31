@@ -231,10 +231,12 @@ public class LogTest extends SimpleDbTestBase {
         // *** Test:
         // T1 start, T2 start and commit, T1 abort
 
+        // t1 insert 3
         Transaction t1 = new Transaction();
         t1.start();
         insertRow(hf1, t1, 3);
 
+        // t2 insert 21 22, commit
         Transaction t2 = new Transaction();
         t2.start();
         insertRow(hf2, t2, 21);
@@ -242,8 +244,11 @@ public class LogTest extends SimpleDbTestBase {
         insertRow(hf2, t2, 22);
         t2.commit();
 
+        // t1 insert 4, abort
         insertRow(hf1, t1, 4);
         abort(t1);
+
+        Database.getLogFile().print();
 
         Transaction t = new Transaction();
         t.start();

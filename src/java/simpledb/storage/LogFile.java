@@ -485,14 +485,13 @@ public class LogFile {
                 Set<PageId> pageIds = new HashSet<>();
 
                 raf.seek(tidToFirstLogRecord.get(tid.getId()));
+//                raf.readLong();
 
                 while (true) {
                     try {
                         int cpType = raf.readInt();
                         long cpTid = raf.readLong();
 
-                        if (cpTid != tid.getId())
-                            break;
 //                System.out.println((raf.getFilePointer() - (INT_SIZE + LONG_SIZE)) + ": RECORD TYPE " + cpType);
 //                System.out.println((raf.getFilePointer() - LONG_SIZE) + ": TID " + cpTid);
 
@@ -515,7 +514,7 @@ public class LogFile {
                                 long start = raf.getFilePointer();
                                 Page before = readPageData(raf);
 
-                                if (!pageIds.contains(before.getId())) {
+                                if (cpTid==tid.getId() && !pageIds.contains(before.getId())) {
                                     System.out.println("ROLLBACK: write beforeImage to file: " + before.getId() + " tid: " + tid.getId());
                                     Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
                                     pageIds.add(before.getId());
@@ -725,7 +724,7 @@ public class LogFile {
      * Print out a human readable represenation of the log
      */
     public void print() throws IOException {
-        System.out.println("==========PRINT===========");
+        System.out.println("==========print log===========");
 
         long curOffset = raf.getFilePointer();
 
