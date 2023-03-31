@@ -288,7 +288,8 @@ public class LogFile {
             newPage = (Page) pageConsts[0].newInstance(pageArgs);
 
             //            Debug.log("READ PAGE OF TYPE " + pageClassName + ", table = " + newPage.getId().getTableId() + ", page = " + newPage.getId().pageno());
-        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
+        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException |
+                 InstantiationException e) {
             e.printStackTrace();
             throw new IOException();
         }
@@ -474,6 +475,64 @@ public class LogFile {
             synchronized (this) {
                 preAppend();
                 // TODO: some code goes here
+                print();
+//                Long record = tidToFirstLogRecord.get(tid.getId());
+//                raf.seek(record);
+//                int i = raf.readInt();
+//                System.out.println("record: "+i);
+                System.out.println("=========================");
+
+                raf.seek(tidToFirstLogRecord.get(tid.getId()));
+
+                while (true) {
+                    try {
+                        int cpType = raf.readInt();
+                        long cpTid = raf.readLong();
+
+                        if (cpTid != tid.getId())
+                            break;
+//                System.out.println((raf.getFilePointer() - (INT_SIZE + LONG_SIZE)) + ": RECORD TYPE " + cpType);
+//                System.out.println((raf.getFilePointer() - LONG_SIZE) + ": TID " + cpTid);
+
+                        switch (cpType) {
+                            case BEGIN_RECORD:
+                                System.out.println(" (BEGIN) " + cpTid);
+                                System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
+                                break;
+                            case ABORT_RECORD:
+                                System.out.println(" (ABORT) " + cpTid);
+                                System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
+                                break;
+                            case COMMIT_RECORD:
+                                System.out.println(" (COMMIT) " + cpTid);
+                                System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
+                                break;
+                            case UPDATE_RECORD:
+                                System.out.println(" (UPDATE) " + cpTid);
+
+                                long start = raf.getFilePointer();
+                                Page before = readPageData(raf);
+
+                                Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
+
+                                long middle = raf.getFilePointer();
+                                Page after = readPageData(raf);
+                                System.out.println(start + ": before image table id " + before.getId().getTableId());
+                                System.out.println((start + INT_SIZE) + ": before image page number " + before.getId().getPageNumber());
+                                System.out.println((start + INT_SIZE) + " TO " + (middle - INT_SIZE) + ": page data");
+                                System.out.println(middle + ": after image table id " + after.getId().getTableId());
+                                System.out.println((middle + INT_SIZE) + ": after image page number " + after.getId().getPageNumber());
+                                System.out.println((middle + INT_SIZE) + " TO " + (raf.getFilePointer()) + ": page data");
+                                System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
+                        }
+
+                    } catch (EOFException e) {
+                        //e.printStackTrace();
+                        break;
+                    }
+                }
+
+
             }
         }
     }
@@ -521,26 +580,25 @@ public class LogFile {
             try {
                 int cpType = raf.readInt();
                 long cpTid = raf.readLong();
-
-                System.out.println((raf.getFilePointer() - (INT_SIZE + LONG_SIZE)) + ": RECORD TYPE " + cpType);
-                System.out.println((raf.getFilePointer() - LONG_SIZE) + ": TID " + cpTid);
+//                System.out.println((raf.getFilePointer() - (INT_SIZE + LONG_SIZE)) + ": RECORD TYPE " + cpType);
+//                System.out.println((raf.getFilePointer() - LONG_SIZE) + ": TID " + cpTid);
 
                 switch (cpType) {
                     case BEGIN_RECORD:
-                        System.out.println(" (BEGIN)");
+                        System.out.println(" (BEGIN) " + cpTid);
                         System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
                         break;
                     case ABORT_RECORD:
-                        System.out.println(" (ABORT)");
+                        System.out.println(" (ABORT) " + cpTid);
                         System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
                         break;
                     case COMMIT_RECORD:
-                        System.out.println(" (COMMIT)");
+                        System.out.println(" (COMMIT) " + cpTid);
                         System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
                         break;
 
                     case CHECKPOINT_RECORD:
-                        System.out.println(" (CHECKPOINT)");
+                        System.out.println(" (CHECKPOINT) " + cpTid);
                         int numTransactions = raf.readInt();
                         System.out.println((raf.getFilePointer() - INT_SIZE) + ": NUMBER OF OUTSTANDING RECORDS: " + numTransactions);
 
@@ -554,7 +612,7 @@ public class LogFile {
 
                         break;
                     case UPDATE_RECORD:
-                        System.out.println(" (UPDATE)");
+                        System.out.println(" (UPDATE) " + cpTid);
 
                         long start = raf.getFilePointer();
                         Page before = readPageData(raf);

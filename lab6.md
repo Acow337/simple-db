@@ -75,6 +75,7 @@ Here's what to do:
 2. Your `BufferPool.transactionComplete()` calls `flushPage()` for each page
    that a committed transaction dirtied. For each such page, add a call to
    `p.setBeforeImage()` after you have flushed the page:
+   
    ```java
    // use current page contents as the before-image
    // for the next transaction that modifies this page.
@@ -130,8 +131,8 @@ its locks. Its job is to un-do any changes the transaction may have made to the
 database.
 
 Your `rollback()` should read the log file, find all update records associated
-with the aborting transaction, extract the before-image from each, and write the
-before-image to the table file.  Use `raf.seek()` to move around in the log
+with the aborting transaction, extract the before-image from each, and **write the**
+**before-image to the table file**.  Use `raf.seek()` to move around in the log
 file, and `raf.readInt()` etc.  to examine it. Use `readPageData()` to read each
 of the before- and after-images.  You can use the map `tidToFirstLogRecord`
 (which maps from a transaction id to an offset in the heap file) to determine
