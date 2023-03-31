@@ -341,6 +341,7 @@ public class LogTest extends SimpleDbTestBase {
         t = new Transaction();
         t.start();
         look(hf1, t, 1, true);
+        Database.getLogFile().print();
         look(hf1, t, 8, false);
         look(hf1, t, 9, false);
         t.commit();

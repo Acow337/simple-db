@@ -162,7 +162,7 @@ called before any new transactions start. Your implementation should:
 1. Read the last checkpoint, if any.
 
 2. Scan forward from the checkpoint (or start of log file, if no checkpoint)
-   to build the set of loser transactions. Re-do updates during this pass. You
+   to build the set of loser transactions. **Re-do updates during this pass**. You
    can safely start re-do at the checkpoint because `LogFile.logCheckpoint()`
    flushes all dirty buffers to disk.
 
