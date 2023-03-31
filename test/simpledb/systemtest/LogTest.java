@@ -48,6 +48,7 @@ public class LogTest extends SimpleDbTestBase {
     // check that the specified tuple is, or is not, present
     void look(HeapFile hf, Transaction t, int v1, boolean present)
         throws DbException, TransactionAbortedException {
+        System.out.printf("LOOK: check value: %d present: %s \n",v1,present);
         int count = 0;
         SeqScan scan = new SeqScan(t.getId(), hf.getId(), "");
         scan.open();
@@ -70,6 +71,7 @@ public class LogTest extends SimpleDbTestBase {
     void doInsert(HeapFile hf, int t1, int t2)
         throws DbException, TransactionAbortedException, IOException {
         Transaction t = new Transaction();
+        System.out.printf("LogTest: DoInsert: tid: %d v1: %d v2: %d\n",t.getId().getId(),t1,t2);
         t.start();
         if(t1 != -1)
             insertRow(hf, t, t1);
@@ -96,6 +98,7 @@ public class LogTest extends SimpleDbTestBase {
         throws DbException, TransactionAbortedException, IOException {
         Transaction t = new Transaction();
         t.start();
+        System.out.printf("LogTest: DoNotInsert: tid: %d v1: %d\n",t.getId().getId(),t1);
         if(t1 != -1)
             insertRow(hf, t, t1);
         if(-1 != -1)
@@ -112,6 +115,8 @@ public class LogTest extends SimpleDbTestBase {
     // run log recovery
     void crash()
         throws IOException {
+        System.out.println("============CRASH=============");
+        Database.getLogFile().print();
         Database.reset();
         hf1 = Utility.openHeapFile(2, file1);
         hf2 = Utility.openHeapFile(2, file2);

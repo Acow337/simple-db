@@ -21,9 +21,9 @@ The logging code we provide generates records intended for physical **whole-page
 undo and redo. **When a page is first read in, our code remembers the original**
 **content of the page as a before-image**. When a transaction updates a page, the
 corresponding log record contains that remembered before-image as well as the
-content of the page after modification as an after-image. You'll use the
-before-image to roll back during aborts and to undo loser transactions during
-recovery, and the after-image to redo winners during recovery.
+content of the page after modification as an after-image. **You'll use the**
+**before-image to roll back during aborts and to undo loser transactions during**
+**recovery, and the after-image to redo winners during recovery.**
 
 We are able to get away with doing whole-page physical UNDO (while ARIES must do
 logical UNDO) because we are doing page level locking and because we have no
