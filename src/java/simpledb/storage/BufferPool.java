@@ -363,10 +363,13 @@ public class BufferPool {
         Iterator<Page> it = LRUCache.valueIterator();
         while (it.hasNext()) {
             Page p = it.next();
-            flushPage(p);
-            // release the page
-            it.remove();
+            if (p.isDirty() != null) {
+                flushPage(p);
+                // release the page
+                unsafeReleasePage(null, p.getId());
+            }
         }
+        System.out.println("After flushAllPages: " + LRUCache);
     }
 
     /**
@@ -405,7 +408,7 @@ public class BufferPool {
     }
 
     private synchronized void flushPage(Page p) throws IOException {
-//        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
+        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
 
         // append an update record to the log, with
         // a before-image and after-image.

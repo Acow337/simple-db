@@ -63,6 +63,9 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
     bp.getPage(tid, p2, Permissions.READ_WRITE).markDirty(true, tid);
     bp.flushAllPages();
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
+
+    // TODO I think this txn should commit to ignore the locks associated to tid, but the fact is not, why?
+    Database.getBufferPool().transactionComplete(tid);
   }
 
   /**

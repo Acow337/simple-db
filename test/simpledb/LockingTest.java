@@ -63,6 +63,9 @@ public class LockingTest extends TestUtil.CreateHeapFile {
         bp.getPage(tid, p2, Permissions.READ_WRITE).markDirty(true, tid);
         bp.flushAllPages();
         bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
+        // TODO I think this txn should commit to ignore the locks associated to tid, but the fact is not, why?
+        Database.getBufferPool().transactionComplete(tid);
+        System.out.printf("t1 t2: %d %d tid: %d\n", this.tid1.getId(), this.tid2.getId(),tid.getId());
         System.out.println("=========After SetUp==========");
     }
 
@@ -105,6 +108,7 @@ public class LockingTest extends TestUtil.CreateHeapFile {
 
         // if we don't have the lock after TIMEOUT, we assume blocking.
         Thread.sleep(TIMEOUT);
+        System.out.println("grabLock assert");
         assertEquals(expected, t.acquired());
 
         // TODO(ghuo): yes, stop() is evil, but this is unit test cleanup
