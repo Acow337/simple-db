@@ -514,7 +514,7 @@ public class LogFile {
                                 long start = raf.getFilePointer();
                                 Page before = readPageData(raf);
 
-                                if (cpTid==tid.getId() && !pageIds.contains(before.getId())) {
+                                if (cpTid == tid.getId() && !pageIds.contains(before.getId())) {
                                     System.out.println("ROLLBACK: write beforeImage to file: " + before.getId() + " tid: " + tid.getId());
                                     Database.getCatalog().getDatabaseFile(before.getId().getTableId()).writePage(before);
                                     pageIds.add(before.getId());
@@ -575,8 +575,20 @@ public class LogFile {
                 raf.seek(0);
                 long checkpoint = raf.readLong();
                 System.out.println("0: checkpoint record at offset " + checkpoint);
-                if (checkpoint != -1)
+                if (checkpoint != -1) {
                     raf.seek(checkpoint);
+
+//                    int numTransactions = raf.readInt();
+//                    System.out.println((raf.getFilePointer() - INT_SIZE) + ": NUMBER OF OUTSTANDING RECORDS: " + numTransactions);
+//
+//                    while (numTransactions-- > 0) {
+//                        long tid = raf.readLong();
+//                        long firstRecord = raf.readLong();
+//                        System.out.println((raf.getFilePointer() - (LONG_SIZE + LONG_SIZE)) + ": TID: " + tid);
+//                        System.out.println((raf.getFilePointer() - LONG_SIZE) + ": FIRST LOG RECORD: " + firstRecord);
+//                    }
+//                    System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
+                }
 
                 while (true) {
                     try {
@@ -596,9 +608,9 @@ public class LogFile {
                                 break;
                             case ABORT_RECORD:
                                 leftTids.remove(cpTid);
-                                System.out.println("REMOVE: "+cpTid);
+                                System.out.println("REMOVE: " + cpTid);
                                 for (Page page : tidToPages.get(cpTid)) {
-                                    System.out.println("REMOVE: "+cpTid+" page: "+page.getId());
+                                    System.out.println("REMOVE: " + cpTid + " page: " + page.getId());
                                     Database.getCatalog().getDatabaseFile(page.getId().getTableId()).writePage(page);
                                 }
                                 raf.readLong();
@@ -609,9 +621,13 @@ public class LogFile {
                                 break;
                             case CHECKPOINT_RECORD:
                                 int numTransactions = raf.readInt();
+                                System.out.println((raf.getFilePointer() - INT_SIZE) + ": NUMBER OF OUTSTANDING RECORDS: " + numTransactions);
                                 while (numTransactions-- > 0) {
                                     long tid = raf.readLong();
+                                    leftTids.add(tid);
                                     long firstRecord = raf.readLong();
+                                    System.out.println((raf.getFilePointer() - (LONG_SIZE + LONG_SIZE)) + ": TID: " + tid);
+                                    System.out.println((raf.getFilePointer() - LONG_SIZE) + ": FIRST LOG RECORD: " + firstRecord);
                                 }
                                 System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
                                 break;
@@ -633,6 +649,10 @@ public class LogFile {
                                 System.out.println("REDO: " + after.getId().getPageNumber() + " tid: " + cpTid);
                                 Database.getCatalog().getDatabaseFile(after.getId().getTableId()).writePage(after);
 
+                                if (!tidToPageIds.containsKey(cpTid)) {
+                                    tidToPageIds.put(cpTid, new HashSet<>());
+                                    tidToPages.put(cpTid, new HashSet<>());
+                                }
                                 if (!tidToPageIds.get(cpTid).contains(before.getId())) {
                                     tidToPageIds.get(cpTid).add(before.getId());
                                     tidToPages.get(cpTid).add(before);
@@ -681,6 +701,14 @@ public class LogFile {
                                     break;
                                 case COMMIT_RECORD:
                                     raf.readLong();
+                                    break;
+                                case CHECKPOINT_RECORD:
+                                    int numTransactions = raf.readInt();
+                                    while (numTransactions-- > 0) {
+                                        long newTid = raf.readLong();
+                                        long firstRecord = raf.readLong();
+                                    }
+                                    System.out.println(raf.getFilePointer() + ": RECORD START OFFSET: " + raf.readLong());
                                     break;
                                 case UPDATE_RECORD:
                                     System.out.println(" (UPDATE) " + cpTid);
