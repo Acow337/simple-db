@@ -30,12 +30,15 @@ public class BTreeLeafPage extends BTreePage {
         Iterator<Tuple> it = this.iterator();
         while (it.hasNext()) {
             Tuple t = it.next();
+            if (!(null == prev || prev.compare(Predicate.Op.LESS_THAN_OR_EQ, t.getField(fieldid)))) {
+                System.out.printf("t %s\n", t.getRecordId().getPageId());
+            }
             assert (null == prev || prev.compare(Predicate.Op.LESS_THAN_OR_EQ, t.getField(fieldid)));
             prev = t.getField(fieldid);
             assert (t.getRecordId().getPageId().equals(this.getId()));
         }
 
-        System.out.println("checkRep: prev: "+prev+" upperBound: "+upperBound+" pageId: "+pid.getPageNumber());
+//        System.out.println("checkRep: prev: "+prev+" upperBound: "+upperBound+" pageId: "+pid.getPageNumber());
         assert null == upperBound || null == prev || (prev.compare(Predicate.Op.LESS_THAN_OR_EQ, upperBound));
 
         assert !checkoccupancy || depth <= 0 || (getNumTuples() >= getMaxTuples() / 2);

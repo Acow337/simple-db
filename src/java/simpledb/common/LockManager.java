@@ -79,7 +79,7 @@ public class LockManager {
     }
 
     public void acquireLock(TransactionId tid, PageId pageId, Permissions perm) throws DeadlockException, TransactionAbortedException {
-        System.out.println("AcquireLock: Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
+//        System.out.println("AcquireLock: Txn id: " + tid + "query Lock: " + " pageId: " + pageId + " perm: " + perm);
         long begin = System.currentTimeMillis();
         try {
             while (!lockPage(tid, pageId, perm, 0)) {

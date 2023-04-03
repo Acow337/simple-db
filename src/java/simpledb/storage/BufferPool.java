@@ -2,9 +2,6 @@ package simpledb.storage;
 
 import simpledb.Debug;
 import simpledb.common.*;
-import simpledb.index.BTreeFile;
-import simpledb.index.BTreeLeafPage;
-import simpledb.index.BTreePageId;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
@@ -46,7 +43,6 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-//        System.out.println("BufferPool: bufferpool construct, capacity: " + numPages);
         pages = new ArrayList<>(numPages);
         LRUCache = new LRUCache<>(numPages);
     }
@@ -277,35 +273,7 @@ public class BufferPool {
      * @param t       the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t) throws DbException, IOException, TransactionAbortedException {
-
-        // if btree, find the right page to insert
-
-//        if (t.getRecordId() != null) {
-//            t.getRecordId().getPageId().setTableId(tableId);
-//        }
-//
-//        if (t.getRecordId() != null && t.getRecordId().getPageId().getClass() == BTreePageId.class) {
-//            BTreeFile bTreeFile = (BTreeFile) Database.getCatalog().getDatabaseFile(tableId);
-//            bTreeFile.insertTuple(tid, t);
-//            return;
-//        }
-//
-//        if (t.getRecordId() != null) {
-//            Page page = Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-//            if (page.getClass() == HeapPage.class) {
-//                HeapPage p = (HeapPage) page;
-//                p.insertTuple(t);
-//                p.markDirty(true, tid);
-//                return;
-//            } else if (page.getClass() == BTreeLeafPage.class) {
-//                BTreeLeafPage p = (BTreeLeafPage) page;
-//                p.insertTuple(t);
-//                p.markDirty(true, tid);
-//            }
-//        }
-
-        // if can't find the page, get page from disk
-        Debug.printTxn(tid, "insert begin");
+//        Debug.printTxn(tid, "insert begin");
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for (Page page : modifiedPages) {
             Page remove = LRUCache.put(page.getId(), page);
@@ -329,20 +297,6 @@ public class BufferPool {
      * @param t   the tuple to delete
      */
     public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
-//        System.out.println("Delete: " + t.toValueString());
-//        HeapPage p = (HeapPage) LRUCache.get((t.getRecordId() != null) ? t.getRecordId().getPageId() : null);
-
-//        if (t.getRecordId() != null) {
-//            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
-////            System.out.println("Before delete: " + p.getUsedSlots());
-//            p.deleteTuple(t);
-//            p.markDirty(true, tid);
-////            System.out.println("After delete: " + p.getUsedSlots());
-//            return;
-//        }
-
-
-        // if can't find the page, get page from disk
         List<Page> modifiedPages = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
         for (Page page : modifiedPages) {
             Page remove = LRUCache.put(page.getId(), page);
@@ -365,8 +319,7 @@ public class BufferPool {
             Page p = it.next();
             if (p.isDirty() != null) {
                 flushPage(p);
-                // release the page
-                unsafeReleasePage(null, p.getId());
+                //TODO release the page
             }
         }
         System.out.println("After flushAllPages: " + LRUCache);
@@ -408,7 +361,7 @@ public class BufferPool {
     }
 
     private synchronized void flushPage(Page p) throws IOException {
-        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
+//        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
 
         // append an update record to the log, with
         // a before-image and after-image.

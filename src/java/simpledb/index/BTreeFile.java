@@ -822,7 +822,7 @@ public class BTreeFile implements DbFile {
 //        System.out.println("sibling capability: " + sibling.getMaxTuples());
 //        System.out.println("Before steal, sibling:" + (sibling.getMaxTuples() - sibling.getNumEmptySlots()) + " ,page:" + (page.getMaxTuples() - page.getNumEmptySlots()));
 
-        System.out.printf("stealFromLeafPage %s -> %s isRight: %s\n", sibling.getId(), page.getId(), isRightSibling);
+        System.out.printf("BTreeFile: stealFromLeafPage %s -> %s isRight: %s\n", sibling.getId(), page.getId(), isRightSibling);
 
         Tuple steal = null;
         Iterator<Tuple> iterator;
@@ -938,10 +938,10 @@ public class BTreeFile implements DbFile {
         // pointers of all children in the entries that were moved.
 
         // move the page of leftSibling to page
-        System.out.printf("stealFromLeftInternalPage %s -> %s\n", leftSibling.getId(), page.getId());
+        System.out.printf("BTreeFile: stealFromLeftInternalPage %s -> %s Num: leftSibling %d page %d\n", leftSibling.getId(), page.getId(),leftSibling.getNumEntries(),page.getNumEntries());
 
-        Iterator<BTreeEntry> leftSiblingIterator = leftSibling.reverseIterator();
-        Iterator<BTreeEntry> pageIterator = page.iterator();
+        Iterator<BTreeEntry> leftSiblingIterator;
+        Iterator<BTreeEntry> pageIterator;
         BTreeEntry steal = null;
         BTreeEntry pageLeftEntry = null;
         BTreeEntry insert = null;
@@ -959,12 +959,11 @@ public class BTreeFile implements DbFile {
             System.out.println("before parentEntry: " + parentEntry);
             leftSibling.deleteKeyAndRightChild(steal);
             Field key = parentEntry.getKey();
-
-//            parentEntry.setKey(steal.getKey());
+            parentEntry.setKey(steal.getKey());
             insert = new BTreeEntry(key, steal.getRightChild(), pageLeftEntry.getLeftChild());
             System.out.println("steal: " + steal + " insert: " + insert + " pageLeftEntry: " + pageLeftEntry);
             page.insertEntry(insert);
-            System.out.println("after parentEntry: " + parentEntry);
+//            System.out.println("after parentEntry: " + parentEntry);
             // update parent
 
             // Be sure to update the parent pointers of all children in the entries that were moved.
@@ -973,6 +972,7 @@ public class BTreeFile implements DbFile {
             System.out.println("dirtyPages Put: " + p.getId());
             dirtypages.put(p.getId(), p);
         }
+        System.out.printf("BTreeFile: stealEnd: leftSibling %d page %d\n" ,leftSibling.getNumEntries(),page.getNumEntries());
 
         // update parent
         newParentEntry = new BTreeEntry(steal.getKey(), leftSibling.pid, page.pid);
@@ -981,7 +981,6 @@ public class BTreeFile implements DbFile {
 
 //        parentEntry.setKey(steal.getKey());
         System.out.println("After update parent: " + newParentEntry);
-
 
         // update dirtyPages
         dirtypages.put(page.getId(), page);
@@ -1014,8 +1013,7 @@ public class BTreeFile implements DbFile {
         // the corresponding parent entry. Be sure to update the parent
         // pointers of all children in the entries that were moved.
 
-        System.out.printf("stealFromRightInternalPage %s -> %s\n", rightSibling.getId(), page.getId());
-
+        System.out.printf("BTreeFile: stealFromRightInternalPage %s -> %s\n", rightSibling.getId(), page.getId());
         // move the page of rightSibling to page
         Iterator<BTreeEntry> rightSiblingIterator;
         Iterator<BTreeEntry> pageIterator;
@@ -1036,8 +1034,7 @@ public class BTreeFile implements DbFile {
             System.out.println("before parentEntry: " + parentEntry);
             rightSibling.deleteKeyAndLeftChild(steal);
             Field key = parentEntry.getKey();
-
-//            parentEntry.setKey(steal.getKey());
+            parentEntry.setKey(steal.getKey());
             insert = new BTreeEntry(key, pageRightEntry.getRightChild(), steal.getLeftChild());
 //            insert = new BTreeEntry(key, steal.getLeftChild(), pageRightEntry.getRightChild());
             System.out.println("steal: " + steal + " insert: " + insert + " pageRightEntry: " + pageRightEntry);
@@ -1052,7 +1049,6 @@ public class BTreeFile implements DbFile {
         }
 
         // update parent
-//        newParentEntry = new BTreeEntry(steal.getKey(), rightSibling.pid, page.pid);
         newParentEntry = new BTreeEntry(steal.getKey(), page.pid, rightSibling.pid);
         parent.deleteKeyAndRightChild(parentEntry);
         parent.insertEntry(newParentEntry);
@@ -1106,7 +1102,7 @@ public class BTreeFile implements DbFile {
         leftPage.setRightSiblingId(rightPage.getRightSiblingId());
 //        System.out.printf("page: %s set right is %s\n", leftPage.getId().getPageNumber(), rightPage.getRightSiblingId().getPageNumber());
         if (rightPage.getRightSiblingId() != null) {
-            BTreeLeafPage page = (BTreeLeafPage) Database.getBufferPool().getPage(tid,rightPage.getRightSiblingId(), Permissions.READ_ONLY);
+            BTreeLeafPage page = (BTreeLeafPage) Database.getBufferPool().getPage(tid, rightPage.getRightSiblingId(), Permissions.READ_ONLY);
             page.setLeftSiblingId(leftPage.getId());
 //            System.out.printf("page: %s set left is %s\n", page.getId().getPageNumber(), leftPage.getId().getPageNumber());
         }
@@ -1122,7 +1118,7 @@ public class BTreeFile implements DbFile {
         dirtypages.put(rightPage.getId(), rightPage);
         dirtypages.put(parent.getId(), parent);
 
-        System.out.printf("merge end, now %s page size is %s\n", leftPage.getId().getPageNumber(), leftPage.getNumTuples());
+        System.out.printf("BTreeFile: merge end, now %s page size is %s\n", leftPage.getId().getPageNumber(), leftPage.getNumTuples());
     }
 
     /**
