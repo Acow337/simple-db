@@ -127,11 +127,11 @@ public class SystemTestUtil {
             }
         }
 
-        System.out.printf("Expected tuples:");
-        for (List<Integer> t : copy) {
-            System.out.printf("\t" + Utility.listToString(t));
-        }
-        System.out.printf("\n");
+//        System.out.printf("Expected tuples:");
+//        for (List<Integer> t : copy) {
+//            System.out.printf("\t" + Utility.listToString(t));
+//        }
+//        System.out.printf("\n");
 
         iterator.open();
         while (iterator.hasNext()) {

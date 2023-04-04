@@ -40,7 +40,7 @@ public class LRUCache<K, T> {
     }
 
     public synchronized void remove(PageId key) {
-//        System.out.println("LRUCache: remove: " + key.getPageNumber());
+        System.out.println("LRUCache: remove: " + key.getPageNumber());
 
         if (!cache.containsKey(key)) {
             return;
@@ -80,7 +80,7 @@ public class LRUCache<K, T> {
     }
 
     public synchronized Page put(PageId key, Page value) throws DbException {
-//        System.out.println("PUT: " + key);
+        System.out.println("PUT: " + key);
         DLinkedNode node = cache.get(key);
 //        System.out.println("put: " + key);
         DLinkedNode remove = null;
@@ -123,7 +123,7 @@ public class LRUCache<K, T> {
     }
 
     private DLinkedNode removeTail() throws DbException {
-//        System.out.println("removeTail :" + toString());
+        System.out.println("removeTail :" + toString());
         DLinkedNode res = tail.prev;
 //        while (res.value != null && res.value.isDirty() != null) {
 //            res = res.prev;

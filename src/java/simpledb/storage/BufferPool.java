@@ -90,7 +90,7 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException, DbException {
         // try to get the lock
-//        System.out.println("BufferPool get page: " + pid.getPageNumber() + " perm: " + perm + " tid: " + tid);
+        System.out.println("BufferPool get page: " + pid.getPageNumber() + " perm: " + perm + " tid: " + tid);
 //        System.out.println(LRUCache.toString());
         try {
             Database.getLockManager().acquireLock(tid, pid, perm);
@@ -135,7 +135,7 @@ public class BufferPool {
 
     // internal use, no lock
     public Page getPage(PageId pid) throws DbException {
-//        System.out.println("BufferPool get page: " + pid);
+        System.out.println("BufferPool get page: " + pid);
 //        System.out.println(LRUCache.toString());
         if (LRUCache.containsKey(pid)) {
 //            System.out.println("BufferPool: " + "get from catch, catchSize: " + LRUCache.getSize());
@@ -183,7 +183,9 @@ public class BufferPool {
             unsafeReleasePage(tid, pid);
             try {
                 Page page = Database.getBufferPool().getPage(pid);
-                flushPage(page);
+                if (page.isDirty() != null) {
+                    flushPage(page);
+                }
                 // use current page contents as the before-image
                 // for the next transaction that modifies this page.
                 page.setBeforeImage();
@@ -361,7 +363,7 @@ public class BufferPool {
     }
 
     private synchronized void flushPage(Page p) throws IOException {
-//        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
+        System.out.println("BufferPool: flush " + p.getId().getPageNumber());
 
         // append an update record to the log, with
         // a before-image and after-image.
